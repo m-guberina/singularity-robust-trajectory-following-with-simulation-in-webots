@@ -45,6 +45,7 @@ def invKinm_Jac_T(r, t):
 
     return del_thet
 
+
 # using the nullspace for the comfort function
 # when doing manipulability, use the nullspace then go to vec_toward_greater_manip
 def invKinm_PseudoInv(r, t):
@@ -70,6 +71,34 @@ def invKinm_PseudoInv(r, t):
     del_thet = clampVelocity(del_thet)
 
     return del_thet
+
+
+
+
+# using the nullspace singularity avoidance
+def invKinmSingAvoidance_PseudoInv(r, t):
+    e = t - r.p_e
+
+    psedo_inv = np.linalg.pinv(r.jac_tri)
+    del_thet = psedo_inv @ e
+# we can add any nulspace vector to del_thet
+# and given the constraints, we should implement some sort of a comfort function
+# the min and max theta for each angle are hardcoded, but that will be changed 
+# they are hardcoded to +/- pi # 3/4 with center at 0
+# thus for all i q_iM - q_im = pi * 6/4
+# the added q_0 must be left multiplyed by (np.eye(n) - np.linalg.pinv(r.jac_tri) @ r.jac_tri)
+# we take into account the current theta (punish more if closer to the limit)
+# the formula is 3.57 in siciliano 
+    gradMtoE = r.calcMToEGradient()
+#    print(gradMtoE)
+
+    del_thet += (np.eye(len(del_thet)) - psedo_inv @ r.jac_tri) @ gradMtoE
+
+    del_thet = clampVelocity(del_thet)
+
+    return del_thet
+
+
 
 
 def invKinm_dampedSquares(r, t):
@@ -112,7 +141,8 @@ def invKinmGradDesc(r, t):
         return error
     
     def toOptim(thetas):
-        return np.sqrt(np.dot(thetas, thetas))
+        #return np.sqrt(np.dot(thetas, thetas))
+        return np.dot(thetas, thetas)
     e = t - r.p_e
     lb = []
     ub = []
@@ -157,6 +187,77 @@ def invKinmGradDesc(r, t):
 #        del_thet = np.array(del_thet)
     del_thet = clampVelocity(del_thet)
     return del_thet
+
+
+
+###############################################################
+# IK with singularity avoidance via QP
+###############################################################
+
+# qp formulation, solved with scipy
+def invKinmSingAvoidanceWithQP(r, t):
+    
+    def getEEPos(thetas, r, t):
+        p_e = r.eePositionAfterForwKinm(thetas)
+        e = t - p_e
+        error = np.sqrt(np.dot(e,e))
+        return error
+    
+    # E is shere toward which the manipulability elipsoid M should move
+    # the calculation is defined as a method in the robot_raw class
+    def toOptim(thetas, r):
+        # alpha is a coef to select the amount of moving toward E
+        aplha = 0.3
+        grad_to_E = r.calcMToEGradient()
+        return np.dot(thetas, thetas) #+ coef_to_E @ thetas
+#        return np.dot(thetas, thetas) + np.dot(grad_to_E, thetas)
+    e = t - r.p_e
+    lb = []
+    ub = []
+    def constraint(r, e):
+        # jac_tri @ del_thet must be equal to e
+        # when doing manipulability optimization it will be e + vec_toward_greater_manip
+        return scipy.optimize.LinearConstraint(r.jac_tri, e, e)
+
+
+    for bo in range(len(r.joints)):
+        lb.append(-3.0)
+        ub.append(3.0)
+    bounds = scipy.optimize.Bounds(lb, ub)
+
+    error = np.sqrt(np.dot(e,e))
+    thetas_start = []
+    for th in range(len(r.joints)):
+        thetas_start.append(r.joints[th].theta)
+    thetas_start = np.array(thetas_start)
+
+    lin_constraint = constraint(r, e)
+    if (r.clamp == 1):
+        res = scipy.optimize.minimize(toOptim, thetas_start, args=(r), method='SLSQP', constraints=lin_constraint, bounds=bounds)
+    else:
+        res = scipy.optimize.minimize(toOptim, thetas_start, args=(r), method='SLSQP', constraints=lin_constraint)
+#        res = scipy.optimize.minimize(getEEPos, thetas_start, args=(r,t), method='SLSQP', constraints=lin_constraint, bounds=bounds)
+#        res = scipy.optimize.minimize(toOptim, thetas_start, method='CG', bounds=bounds)
+    # without constraints it returns some crazy big numbres like 10**300 or sth
+    # so something is seriously wrong there
+    del_thet = []
+    for bla in range(len(res.x)):
+        del_thet.append(float(res.x[bla]))
+#            del_thet.append(res.x[bla] - 0.01)
+#        for bla in range(len(res.x)):
+#            del_thet.append(float(res.x[bla]))
+#            del_thet[bla] += 0.01
+#            print(del_thet[bla])
+#        print("del_thet")
+#        print(del_thet)
+
+#        del_thet = np.array(del_thet)
+#    print(del_thet)
+    del_thet = clampVelocity(del_thet)
+    return del_thet
+
+
+
 
 
 def invKinmAnim(frame, r, thetas, n_of_frames, n_of_it, ax):

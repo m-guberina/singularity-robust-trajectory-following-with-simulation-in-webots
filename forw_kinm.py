@@ -127,6 +127,110 @@ class Robot_raw:
 #        print("jacobian incoming")
 #        print(self.jacobian)
         self.jac_tri = self.jacobian[0:3,:]
+
+    # the manipulability elipsoid is J @ J.T
+    # and we want to know its derivative w.r.t. q (all joints)
+    # thus we calculate the derivative of a matrix w.r.t a vector
+    # the result is a 3rd order tensor ('cos you get 1 Jacobian for each q_i)
+    # with size 6 x n x n
+    # the calculations are described in Geometry-aware learning, tracking.., eq. 66-68
+    # just figure out the shape of the tensor and it's all clear after that
+# formulae straight from GAMLTT, last page, 66-68
+    def calcManipulabilityJacobian(self):
+        z_is = [np.array([0,0,1])]
+        p_is = [np.array([0,0,0])]
+        toBase = np.array([[1,0,0,0], [0,1,0,0], [0,0,1,0], [0,0,0,1]])
+        #self.p_e = np.array([0.,0.,0.])
+       # just setting up coordinate systems and extracting the apropriate vectors 
+        for j in range(len(self.joints)):
+            toBase = toBase @ self.joints[j].HomMat
+            z_is.append(toBase[0:3, 2])
+            p_is.append(toBase[0:3, 3])
+        p_e = p_is[-1]
+        #self.p_e = p_is[-1]
+        #jac = np.array([0,0,0,0,0,1]).reshape(6,1)
+# we doin only revolute joints still 
+
+# j_p are linear velocities
+# j_o are angular velocities
+        j_os = []
+        j_ps = []
+        for j in range(len(self.joints)):
+            j_ps.append(np.cross(z_is[j], p_e - p_is[j]))
+            j_os.append(z_is[j])
+            #j_i = np.vstack((j_p, j_o))
+            #jac = np.hstack((jac, j_i))
+        #jac = jac[0:6,1:]
+
+    # the manipulability jacobian is a 6xnxn tensor
+    # that's 'cos for every joint we do a derivative of the jacobian and get a 6xn matrix out
+    # and then n of 6xn matrices
+    # to get the jacobian derivate for joint j, we take the jth column of the jacobian
+    # and do the following to the other columns i (there are 2 cases for j<= i and j>i)
+        mjac = []
+        # this first column is here so that we can stack in the for loop, it's removed later
+        mjac_j = np.array([0,0,0,0,0,1]).reshape(6,1)
+        mj_o = 0
+        mj_p = 0
+        # now we take a jth joint by which we will do the derivate
+        for j in range(len(self.joints)):
+            # and we do this for every ith joint
+            for i in range(len(self.joints)):
+                if j <= i:
+                    mj_o = np.cross(j_os[j], j_os[i]).reshape(3,1)
+                    mj_p = np.cross(j_os[j], j_ps[i]).reshape(3,1)
+                    mj_i = np.vstack((mj_o, mj_p))
+                    mjac_j = np.hstack((mjac_j, mj_i))
+
+                else:
+                    mj_o = np.array([0.,0.,0.]).reshape(3,1)
+                    mj_p = np.cross(j_ps[j], j_os[i]).reshape(3,1)
+                    mj_i = np.vstack((mj_o, mj_p))
+                    mj_i = -1 * mj_i
+                    mjac_j = np.hstack((mjac_j, mj_i))
+
+            # with that we calculated J derivative w.r.t. joint j, so append that and move on
+            mjac_j = mjac_j[0:6,1:]
+            mjac.append(mjac_j)
+            mjac_j = np.array([0,0,0,0,0,1]).reshape(6,1)
+        self.mjac = mjac
+    
+
+    # implementation of maric formula 12 (rightmostpart)
+    def calcMToEGradient(self):
+        # first let's calculate the manipulability elipsoid
+        M = self.jacobian @ self.jacobian.T
+        k = np.trace(M)
+        k_log = np.log(k)
+
+        # this is the derivative of the manipulability jacobian w.r.t. joint angles
+        self.calcManipulabilityJacobian()
+
+        # we need M^-1 which might not exist in which case we'll return a 0 
+        # needs to throw an error or something along those lines in production tho
+        try:
+            M_inv = np.linalg.inv(M)
+        except np.linalg.LinAlgError as e:
+            print("ROKNUH U SINGULARITET!!!!!!!!!!!")
+#            M_inv = np.eye(M.shape[1], M.shape[0]) 
+            return np.array([0] * len(self.joints))
+
+        # now we right-mul M_inv by each partial derivative and do a trace of that
+        resulting_coefs = []
+#        print(self.mjac)
+#        print("self.mjac[0]")
+#        print(self.mjac[0])
+        #print("M_inv")
+       # print(M_inv)
+        for i in range(len(self.joints)):
+        #    print("self.mjac[i]")
+        #    print(self.mjac[i])
+            resulting_coefs.append(-2 * k_log * np.trace(self.mjac[i] @ M_inv))
+        resulting_coefs = np.array(resulting_coefs)
+        return resulting_coefs
+
+        
+
             
 
     def drawState(self, ax, color_link):
@@ -147,6 +251,7 @@ class Robot_raw:
             else:
                 self.joints[i].rotate_numerically(thetas[i], self.clamp)
         self.calcJacobian()
+
 
 
     def forwardKinmViaPositions(self, thetas, simulated_robot_motors, sensors):

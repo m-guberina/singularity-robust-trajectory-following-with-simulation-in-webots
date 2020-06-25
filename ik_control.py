@@ -90,14 +90,14 @@ for motor in motors:
 
 inited = 0
 while robot.step(timestep) != -1:
-    print("r.p_e:", r.p_e)
-    print("target:", t)
+ #   print("r.p_e:", r.p_e)
+#    print("target:", t)
     ee_pos_gps = gps.getValues()
     ee_pos_gps[0] = -1 * ee_pos_gps[0]
     z_cp = ee_pos_gps[1]
     ee_pos_gps[1] = ee_pos_gps[2]
     ee_pos_gps[2] = z_cp
-    print("gps position:", ee_pos_gps)
+#    print("gps position:", ee_pos_gps)
 
 
     current_joint_positions = readJointState(sensors)
@@ -111,28 +111,51 @@ while robot.step(timestep) != -1:
     e = t - np.array(ee_pos_gps)
     error = np.sqrt(np.dot(e,e))
 
+    # do not give me the next point before i got to the one you gave me
     if inited != 0: 
         curve_parameter += curve_parameter_step
         inited = 0
     else:
         if error < 0.01:
             inited = 1
+
+    # right from the maric paper
+    # you prolly want to update this jacobian via forwKinm function (by first
+    # reading the sensors and then calculating the jacobian (but it could be unnecessary too)
+#    r.calcJacobian()
+#    M = r.jacobian @ r.jacobian.T
+#    print(M)
+#    k = np.trace(M)
+    # E stands for big sigma
+#    E = k * np.eye(3)
+#    np.exp
+ #   print(M)
+#    manip_index = np.sqrt(np.linalg.det(M))
+#    print("manip_index", manip_index)
+#    r.calcManipulabilityJacobian()
+    #if manip_index != 0.0:
+    #    print(np.linalg.inv(M))
+#    print(r.mjac)
+
+
 #    print("initialized:", inited)
     
-    print("position error:", error)
+#    print("position error:", error)
 
     # here you choose which ik method you want
     # just pass the robot_raw instance and the target position
     # they use the calculated position of ee
     # of course that can be modified
 #    del_thet = invKinm_Jac_T(r, t)
-    del_thet = invKinm_PseudoInv(r, t)
+#    del_thet = invKinm_PseudoInv(r, t)
 #    del_thet = invKinm_dampedSquares(r, t)
-#    del_thet = invKinmGradDesc(r, t)
+    del_thet = invKinmGradDesc(r, t)
+#    del_thet = invKinmSingAvoidance_PseudoInv(r, t)
+#    del_thet = invKinmSingAvoidanceWithQP(r, t)
 
 # clamping for joint rotation limits
-    print("del_thet")
-    print(del_thet)
+#    print("del_thet")
+#    print(del_thet)
 #    print("current_joint_positions")
 #    print(current_joint_positions)
 #    r.printJacobianForSomeAngles(current_joint_positions)
