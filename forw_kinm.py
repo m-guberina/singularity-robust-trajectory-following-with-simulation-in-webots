@@ -103,6 +103,8 @@ class Robot_raw:
 # the simulation is controlled via motors
 # we do calculations by reading from the sensors 
 # and we send the results to the motors
+
+# HERE WE ALSO CALCULATE THE MANIPULABILITY JACOBIAN BUT I WON'T RENAME
     def calcJacobian(self):
         z_is = [np.array([0,0,1])]
         p_is = [np.array([0,0,0])]
@@ -117,10 +119,17 @@ class Robot_raw:
         self.p_e = p_is[-1]
         jac = np.array([0,0,0,0,0,1]).reshape(6,1)
 # we doin only revolute joints still 
+# we'll put these into array cos i don't trust myself that much
+        j_os = []
+        j_ps = []
 
         for j in range(len(self.joints)):
-            j_p = np.cross(z_is[j], p_e - p_is[j]).reshape(3,1)
-            j_o = z_is[j].reshape(3,1)
+            j_p = np.cross(z_is[j], p_e - p_is[j])
+            j_ps.append(j_p)
+            j_p = j_p.reshape(3,1)
+            j_o = z_is[j]
+            j_os.append(z_is[j])
+            j_o = j_o.reshape(3,1)
             j_i = np.vstack((j_p, j_o))
             jac = np.hstack((jac, j_i))
         self.jacobian = jac[0:6,1:]
@@ -135,38 +144,8 @@ class Robot_raw:
     # with size 6 x n x n
     # the calculations are described in Geometry-aware learning, tracking.., eq. 66-68
     # just figure out the shape of the tensor and it's all clear after that
-# formulae straight from GAMLTT, last page, 66-68
-    def calcManipulabilityJacobian(self):
-        z_is = [np.array([0,0,1])]
-        p_is = [np.array([0,0,0])]
-        toBase = np.array([[1,0,0,0], [0,1,0,0], [0,0,1,0], [0,0,0,1]])
-        #self.p_e = np.array([0.,0.,0.])
-       # just setting up coordinate systems and extracting the apropriate vectors 
-        for j in range(len(self.joints)):
-            toBase = toBase @ self.joints[j].HomMat
-            z_is.append(toBase[0:3, 2])
-            p_is.append(toBase[0:3, 3])
-        p_e = p_is[-1]
-        #self.p_e = p_is[-1]
-        #jac = np.array([0,0,0,0,0,1]).reshape(6,1)
-# we doin only revolute joints still 
+    # formulae straight from GAMLTT, last page, 66-68
 
-# j_p are linear velocities
-# j_o are angular velocities
-        j_os = []
-        j_ps = []
-        for j in range(len(self.joints)):
-            j_ps.append(np.cross(z_is[j], p_e - p_is[j]))
-            j_os.append(z_is[j])
-            #j_i = np.vstack((j_p, j_o))
-            #jac = np.hstack((jac, j_i))
-        #jac = jac[0:6,1:]
-
-    # the manipulability jacobian is a 6xnxn tensor
-    # that's 'cos for every joint we do a derivative of the jacobian and get a 6xn matrix out
-    # and then n of 6xn matrices
-    # to get the jacobian derivate for joint j, we take the jth column of the jacobian
-    # and do the following to the other columns i (there are 2 cases for j<= i and j>i)
         mjac = []
         # this first column is here so that we can stack in the for loop, it's removed later
         mjac_j = np.array([0,0,0,0,0,1]).reshape(6,1)
@@ -179,13 +158,13 @@ class Robot_raw:
                 if j <= i:
                     mj_o = np.cross(j_os[j], j_os[i]).reshape(3,1)
                     mj_p = np.cross(j_os[j], j_ps[i]).reshape(3,1)
-                    mj_i = np.vstack((mj_o, mj_p))
+                    mj_i = np.vstack((mj_p, mj_o))
                     mjac_j = np.hstack((mjac_j, mj_i))
 
                 else:
                     mj_o = np.array([0.,0.,0.]).reshape(3,1)
                     mj_p = np.cross(j_ps[j], j_os[i]).reshape(3,1)
-                    mj_i = np.vstack((mj_o, mj_p))
+                    mj_i = np.vstack((mj_p, mj_o))
                     mj_i = -1 * mj_i
                     mjac_j = np.hstack((mjac_j, mj_i))
 
@@ -194,6 +173,9 @@ class Robot_raw:
             mjac.append(mjac_j)
             mjac_j = np.array([0,0,0,0,0,1]).reshape(6,1)
         self.mjac = mjac
+
+# now we that we have the manipulability jacobian,
+# we can get the velocity manipulability jacobian
     
 
     # implementation of maric formula 12 (rightmostpart)
@@ -204,7 +186,7 @@ class Robot_raw:
         k_log = np.log(k)
 
         # this is the derivative of the manipulability jacobian w.r.t. joint angles
-        self.calcManipulabilityJacobian()
+   #     self.calcManipulabilityJacobian()
 
         # we need M^-1 which might not exist in which case we'll return a 0 
         # needs to throw an error or something along those lines in production tho
@@ -215,17 +197,15 @@ class Robot_raw:
 #            M_inv = np.eye(M.shape[1], M.shape[0]) 
             return np.array([0] * len(self.joints))
 
+
         # now we right-mul M_inv by each partial derivative and do a trace of that
         resulting_coefs = []
-#        print(self.mjac)
-#        print("self.mjac[0]")
-#        print(self.mjac[0])
-        #print("M_inv")
-       # print(M_inv)
         for i in range(len(self.joints)):
-        #    print("self.mjac[i]")
-        #    print(self.mjac[i])
-            resulting_coefs.append(-2 * k_log * np.trace(self.mjac[i] @ M_inv))
+            # we first need to calculate an appropriate element of the
+            # velocity manipulability ellipsoid
+            # J^x_i = mjac[i] @ J.T + J @ mjac[i].T
+            M_der_by_q_i = self.mjac[i] @ self.jacobian.T + self.jacobian @ self.mjac[i].T
+            resulting_coefs.append(-2 * k_log * np.trace(M_der_by_q_i @ M_inv))
         resulting_coefs = np.array(resulting_coefs)
         return resulting_coefs
 

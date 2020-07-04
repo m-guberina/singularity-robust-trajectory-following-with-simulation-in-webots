@@ -42,6 +42,19 @@ def goInACirleViaPositionAroundLiftedX(radius, height, x_0, current_parameter):
     return np.array([x_0, radius * np.sin(curve_parameter), height
                 + radius * np.cos(curve_parameter)])
 
+
+def generateCircleForTesting(robot):
+    """1. assume robot is fully extended when all motor positions are at 0
+        2. assume robot's workspace is a torus
+        3. now pick 3 points inside of the workspace
+
+    :robot: TODO
+    :returns: TODO
+
+    """
+    pass
+
+
 # for validation purposes, we must plot this circle
 def drawCircle(radius, height, robot):
     display = robot.getDisplay("display")
@@ -85,8 +98,8 @@ drawCircle(radius, height, robot)
 for motor in motors:
     motor.setVelocity(float('inf'))
    
-for motor in motors:
-        motor.setPosition(0.0)
+#for motor in motors:
+#        motor.setPosition(0.0)
 
 inited = 0
 while robot.step(timestep) != -1:
@@ -123,24 +136,15 @@ while robot.step(timestep) != -1:
     # you prolly want to update this jacobian via forwKinm function (by first
     # reading the sensors and then calculating the jacobian (but it could be unnecessary too)
 #    r.calcJacobian()
-#    M = r.jacobian @ r.jacobian.T
-#    print(M)
-#    k = np.trace(M)
-    # E stands for big sigma
-#    E = k * np.eye(3)
-#    np.exp
- #   print(M)
-#    manip_index = np.sqrt(np.linalg.det(M))
-#    print("manip_index", manip_index)
-#    r.calcManipulabilityJacobian()
-    #if manip_index != 0.0:
-    #    print(np.linalg.inv(M))
-#    print(r.mjac)
+    #M = r.jacobian @ r.jacobian.T
+    M = r.jac_tri @ r.jac_tri.T
+    manip_index = np.sqrt(np.linalg.det(M))
+    eigenvals, eigvecs = np.linalg.eig(M)
 
 
 #    print("initialized:", inited)
     
-#    print("position error:", error)
+    print("position error:", error)
 
     # here you choose which ik method you want
     # just pass the robot_raw instance and the target position
@@ -149,9 +153,9 @@ while robot.step(timestep) != -1:
 #    del_thet = invKinm_Jac_T(r, t)
 #    del_thet = invKinm_PseudoInv(r, t)
 #    del_thet = invKinm_dampedSquares(r, t)
-    del_thet = invKinmGradDesc(r, t)
+#    del_thet = invKinmGradDesc(r, t)
 #    del_thet = invKinmSingAvoidance_PseudoInv(r, t)
-#    del_thet = invKinmSingAvoidanceWithQP(r, t)
+    del_thet = invKinmSingAvoidanceWithQP(r, t)
 
 # clamping for joint rotation limits
 #    print("del_thet")
