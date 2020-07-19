@@ -12,6 +12,7 @@ import numpy as np
 #import matplotlib.colors as colr
 import sys
 import scipy.optimize
+import random
 
 # angle in radians ofc
 def turnAngleToPlusMinusPiRange(angle):
@@ -79,7 +80,9 @@ gps.enable(10)
 
 # Main loop:
 # - perform simulation steps until Webots is stopping the controller
-t = np.array([0.07,-0.6,0.2929])
+#t = np.array([0.07,0.7,0.75929])
+#t = np.array([-0.60,0.07,0.75929])
+t = np.array([0.29702256, -0.424394371, 0.64633786])
 iter_num = 0
 motors = getAllMotors(robot)
 initializeMotorsForPosition(motors)
@@ -91,8 +94,8 @@ r = Robot_raw(motors, sensors)
 curve_parameter = 1
 curve_parameter_step = 0.01
 radius = 0.35
-height = 0.7
-x_0 = -0.8
+height = 0.67
+x_0 = -0.99
 drawCircle(radius, height, robot)
 
 for motor in motors:
@@ -102,6 +105,13 @@ for motor in motors:
 #        motor.setPosition(0.0)
 
 inited = 0
+
+# initialize a file in which measurements are to be stored
+# for later analysis and visualization
+# manipulability measure is left column
+# and the smallest eigenvalue is the right column
+measurements_file = open("./data/sing_av_pinv_mem_data", "w")
+
 while robot.step(timestep) != -1:
  #   print("r.p_e:", r.p_e)
 #    print("target:", t)
@@ -120,11 +130,25 @@ while robot.step(timestep) != -1:
 #    e = t - r.p_e
 
     # get me circle positions
-    t = goInACirleViaPositionAroundLiftedX(radius, height, x_0, curve_parameter)
+#    t = goInACirleViaPositionAroundLiftedX(radius, height, x_0, curve_parameter)
+#    t = goInACirleViaPositionAroundZ(radius, height, curve_parameter)
     e = t - np.array(ee_pos_gps)
     error = np.sqrt(np.dot(e,e))
+    print("error = ", error)
+    print("target =", t)
+    print("position =", ee_pos_gps)
 
-    # do not give me the next point before i got to the one you gave me
+
+    # for ik, give a random spot
+    if error < 0.02:
+        t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(0, 0.75)])
+        #if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) > 1.3:
+         #   t = t - 0.1
+        if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
+            t = t + 0.2
+
+
+# do not give me the next point before i got to the one you gave me
     if inited != 0: 
         curve_parameter += curve_parameter_step
         inited = 0
@@ -141,10 +165,14 @@ while robot.step(timestep) != -1:
     manip_index = np.sqrt(np.linalg.det(M))
     eigenvals, eigvecs = np.linalg.eig(M)
 
+    # now write this to the measurements file
+    measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + "\n")
+    # and stop after you have finished going around the shape
+    if curve_parameter > 16.0:
+        print("WE DONE")
+        sys.exit(0)
 
-#    print("initialized:", inited)
-    
-    print("position error:", error)
+
 
     # here you choose which ik method you want
     # just pass the robot_raw instance and the target position
@@ -155,7 +183,16 @@ while robot.step(timestep) != -1:
 #    del_thet = invKinm_dampedSquares(r, t)
 #    del_thet = invKinmGradDesc(r, t)
 #    del_thet = invKinmSingAvoidance_PseudoInv(r, t)
-    del_thet = invKinmSingAvoidanceWithQP(r, t)
+#    del_thet = invKinmSingAvoidanceWithQP(r, t)
+
+
+
+#    del_thet = np.array(invKinm_Jac_T(r, t)) / 3
+#    del_thet = np.array(invKinm_PseudoInv(r, t)) / 3
+#    del_thet = np.array(invKinm_dampedSquares(r, t)) / 3
+#    del_thet = np.array(invKinmGradDesc(r, t)) / 3
+#    del_thet = np.array(invKinmSingAvoidance_PseudoInv(r, t)) / 3
+    del_thet = np.array(invKinmSingAvoidanceWithQP(r, t)) / 3
 
 # clamping for joint rotation limits
 #    print("del_thet")
@@ -165,4 +202,7 @@ while robot.step(timestep) != -1:
 #    r.printJacobianForSomeAngles(current_joint_positions)
   #  setMotorSpeeds(motors, del_thet)
     r.forwardKinmViaPositions(del_thet, motors, sensors)
+
+#    motor_positions = readJointState(sensors)
+#    print(motor_positions)
 

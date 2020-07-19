@@ -207,10 +207,10 @@ def invKinmSingAvoidanceWithQP(r, t):
     # the calculation is defined as a method in the robot_raw class
     def toOptim(thetas, r):
         # alpha is a coef to select the amount of moving toward E
-        aplha = 0.3
+#        aplha = 3.03
         grad_to_E = r.calcMToEGradient()
-        return np.dot(thetas, thetas) #+ coef_to_E @ thetas
-#        return np.dot(thetas, thetas) + np.dot(grad_to_E, thetas)
+#        return np.dot(thetas, thetas) #+ coef_to_E @ thetas
+        return np.dot(thetas, thetas) + np.dot(grad_to_E, thetas)
     e = t - r.p_e
     lb = []
     ub = []

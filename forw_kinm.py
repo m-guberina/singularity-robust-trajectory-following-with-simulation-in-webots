@@ -147,6 +147,7 @@ class Robot_raw:
     # formulae straight from GAMLTT, last page, 66-68
 
         mjac = []
+        mjac_tri = []
         # this first column is here so that we can stack in the for loop, it's removed later
         mjac_j = np.array([0,0,0,0,0,1]).reshape(6,1)
         mj_o = 0
@@ -170,9 +171,12 @@ class Robot_raw:
 
             # with that we calculated J derivative w.r.t. joint j, so append that and move on
             mjac_j = mjac_j[0:6,1:]
+            mjac_j_tri = mjac_j[0:3,:]
             mjac.append(mjac_j)
+            mjac_tri.append(mjac_j_tri)
             mjac_j = np.array([0,0,0,0,0,1]).reshape(6,1)
         self.mjac = mjac
+        self.mjac_tri = mjac_tri
 
 # now we that we have the manipulability jacobian,
 # we can get the velocity manipulability jacobian
@@ -181,7 +185,7 @@ class Robot_raw:
     # implementation of maric formula 12 (rightmostpart)
     def calcMToEGradient(self):
         # first let's calculate the manipulability elipsoid
-        M = self.jacobian @ self.jacobian.T
+        M = self.jac_tri @ self.jac_tri.T
         k = np.trace(M)
         k_log = np.log(k)
 
@@ -204,9 +208,10 @@ class Robot_raw:
             # we first need to calculate an appropriate element of the
             # velocity manipulability ellipsoid
             # J^x_i = mjac[i] @ J.T + J @ mjac[i].T
-            M_der_by_q_i = self.mjac[i] @ self.jacobian.T + self.jacobian @ self.mjac[i].T
+            M_der_by_q_i = self.mjac_tri[i] @ self.jac_tri.T + self.jac_tri @ self.mjac_tri[i].T
             resulting_coefs.append(-2 * k_log * np.trace(M_der_by_q_i @ M_inv))
         resulting_coefs = np.array(resulting_coefs)
+#        print(resulting_coefs)
         return resulting_coefs
 
         
@@ -245,7 +250,8 @@ class Robot_raw:
                 #TODO write this out
                 self.joints[i].rotate(clampTheta(self.joints[i].theta + thetas[i]), self.clamp)
             else:
-                self.motors[i].setPosition(np.arcsin(np.sin(np.array(self.joints[i].theta + thetas[i]))))
+#                self.motors[i].setPosition(np.arcsin(np.sin(np.array(self.joints[i].theta + thetas[i]))))
+                self.motors[i].setPosition(self.joints[i].theta + thetas[i])
             # now we update the joints and calculate the jacobian
             # perhaps that should be done before motor update, idk, TODO try it out
         self.updateJointsAndJacobian()
