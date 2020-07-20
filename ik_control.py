@@ -82,7 +82,7 @@ gps.enable(10)
 # - perform simulation steps until Webots is stopping the controller
 #t = np.array([0.07,0.7,0.75929])
 #t = np.array([-0.60,0.07,0.75929])
-t = np.array([0.29702256, -0.424394371, 0.64633786])
+t = np.array([-0.59702256, -0.424394371, 0.64633786])
 iter_num = 0
 motors = getAllMotors(robot)
 initializeMotorsForPosition(motors)
@@ -92,7 +92,7 @@ r = Robot_raw(motors, sensors)
 
 # get me a curve yo
 curve_parameter = 1
-curve_parameter_step = 0.01
+curve_parameter_step = 0.1
 radius = 0.35
 height = 0.67
 x_0 = -0.99
@@ -142,10 +142,8 @@ while robot.step(timestep) != -1:
     # for ik, give a random spot
     if error < 0.02:
         t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(0, 0.75)])
-        #if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) > 1.3:
-         #   t = t - 0.1
         if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
-            t = t + 0.2
+            t = t + 0.3
 
 
 # do not give me the next point before i got to the one you gave me
@@ -165,6 +163,8 @@ while robot.step(timestep) != -1:
     manip_index = np.sqrt(np.linalg.det(M))
     eigenvals, eigvecs = np.linalg.eig(M)
 
+    print("trace of M = ", np.trace(M))
+
     # now write this to the measurements file
     measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + "\n")
     # and stop after you have finished going around the shape
@@ -183,7 +183,7 @@ while robot.step(timestep) != -1:
 #    del_thet = invKinm_dampedSquares(r, t)
 #    del_thet = invKinmGradDesc(r, t)
 #    del_thet = invKinmSingAvoidance_PseudoInv(r, t)
-#    del_thet = invKinmSingAvoidanceWithQP(r, t)
+    del_thet = invKinmSingAvoidanceWithQP_kM(r, t)
 
 
 
@@ -192,7 +192,7 @@ while robot.step(timestep) != -1:
 #    del_thet = np.array(invKinm_dampedSquares(r, t)) / 3
 #    del_thet = np.array(invKinmGradDesc(r, t)) / 3
 #    del_thet = np.array(invKinmSingAvoidance_PseudoInv(r, t)) / 3
-    del_thet = np.array(invKinmSingAvoidanceWithQP(r, t)) / 3
+#    del_thet = np.array(invKinmSingAvoidanceWithQP(r, t)) / 3
 
 # clamping for joint rotation limits
 #    print("del_thet")

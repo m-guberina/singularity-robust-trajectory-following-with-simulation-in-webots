@@ -3,8 +3,8 @@ import numpy as np
 #import mpl_toolkits.mplot3d.axes3d as p3
 #from matplotlib.animation import FuncAnimation
 #import matplotlib.colors as colr
-import math
 from webots_api_helper_funs import *
+import scipy.linalg
 
 #from drawing import *
 from joint_as_hom_mat import *
@@ -183,7 +183,7 @@ class Robot_raw:
     
 
     # implementation of maric formula 12 (rightmostpart)
-    def calcMToEGradient(self):
+    def calcMToEGradient_kM(self):
         # first let's calculate the manipulability elipsoid
         M = self.jac_tri @ self.jac_tri.T
         k = np.trace(M)
@@ -214,7 +214,45 @@ class Robot_raw:
 #        print(resulting_coefs)
         return resulting_coefs
 
-        
+       
+    # let's actually strech toward the sphere sigma = kI
+    def calcMToEGradient_kI(self):
+        # first let's calculate the manipulability elipsoid
+        M = self.jac_tri @ self.jac_tri.T
+#k = np.trace(M)
+# it should not matter how big the sphere is, just that it is biggert than the ellipsoid
+# so if i just choose, say, k = 2 i should be set
+# that that way i do not have to bother with derivating sigma wrt q cos it is's a constant
+#        k = np.trace(M)
+        k = 2
+        sigma = k * np.eye(3)
+        sigma_sqrt = scipy.linalg.fractional_matrix_power(sigma, 0.5)
+        Theta = sigma_sqrt @ M @ sigma_sqrt
+
+        # this is the derivative of the manipulability jacobian w.r.t. joint angles
+   #     self.calcManipulabilityJacobian()
+
+        # we need M^-1 which might not exist in which case we'll return a 0 
+        # needs to throw an error or something along those lines in production tho
+        try:
+            M_inv = np.linalg.inv(M)
+        except np.linalg.LinAlgError as e:
+            print("ROKNUH U SINGULARITET!!!!!!!!!!!")
+#            M_inv = np.eye(M.shape[1], M.shape[0]) 
+            return np.array([0] * len(self.joints))
+
+
+        # now we right-mul M_inv by each partial derivative and do a trace of that
+        resulting_coefs = []
+        for i in range(len(self.joints)):
+            # we first need to calculate an appropriate element of the
+            # velocity manipulability ellipsoid
+            # J^x_i = mjac[i] @ J.T + J @ mjac[i].T
+            M_der_by_q_i = self.mjac_tri[i] @ self.jac_tri.T + self.jac_tri @ self.mjac_tri[i].T
+            resulting_coefs.append(-2 * k_log * np.trace(M_der_by_q_i @ M_inv))
+        resulting_coefs = np.array(resulting_coefs)
+#        print(resulting_coefs)
+        return resulting_coefs
 
             
 
