@@ -51,6 +51,8 @@ class Robot_raw:
             p = p.split(';')
             self.joints.append(Joint(float(p[0]), float(p[1]), float(p[2]), float(p[3]), self.clamp))
 
+        self.ndof = len(self.joints)
+
         fil.close()
         self.jacobian = 0
         self.calcJacobian()
@@ -62,7 +64,7 @@ class Robot_raw:
         # each joint equates to four lines: 3 for orientation and 1 for the link
         # and each line has its x,y and z coordinate
         # thus 1 joint is: [x_hat, y_hat, z_hat, p] = [[x_hat1_x, x_hat_y, x_hat_z], [...]
-        for j in range(len(self.joints)):
+        for j in range(self.ndof):
             x_hat = self.joints[j].HomMat[0:3,0]
             y_hat = self.joints[j].HomMat[0:3,1]
             z_hat = self.joints[j].HomMat[0:3,2]
@@ -111,7 +113,7 @@ class Robot_raw:
         toBase = np.array([[1,0,0,0], [0,1,0,0], [0,0,1,0], [0,0,0,1]])
         self.p_e = np.array([0.,0.,0.])
         
-        for j in range(len(self.joints)):
+        for j in range(self.ndof):
             toBase = toBase @ self.joints[j].HomMat
             z_is.append(toBase[0:3, 2])
             p_is.append(toBase[0:3, 3])
@@ -123,7 +125,7 @@ class Robot_raw:
         j_os = []
         j_ps = []
 
-        for j in range(len(self.joints)):
+        for j in range(self.ndof):
             j_p = np.cross(z_is[j], p_e - p_is[j])
             j_ps.append(j_p)
             j_p = j_p.reshape(3,1)
@@ -153,9 +155,9 @@ class Robot_raw:
         mj_o = 0
         mj_p = 0
         # now we take a jth joint by which we will do the derivate
-        for j in range(len(self.joints)):
+        for j in range(self.ndof):
             # and we do this for every ith joint
-            for i in range(len(self.joints)):
+            for i in range(self.ndof):
                 if j <= i:
                     mj_o = np.cross(j_os[j], j_os[i]).reshape(3,1)
                     mj_p = np.cross(j_os[j], j_ps[i]).reshape(3,1)
@@ -199,12 +201,12 @@ class Robot_raw:
         except np.linalg.LinAlgError as e:
             print("ROKNUH U SINGULARITET!!!!!!!!!!!")
 #            M_inv = np.eye(M.shape[1], M.shape[0]) 
-            return np.array([0] * len(self.joints))
+            return np.array([0] * self.ndof)
 
 
         # now we right-mul M_inv by each partial derivative and do a trace of that
         resulting_coefs = []
-        for i in range(len(self.joints)):
+        for i in range(self.ndof):
             # we first need to calculate an appropriate element of the
             # velocity manipulability ellipsoid
             # J^x_i = mjac[i] @ J.T + J @ mjac[i].T
@@ -219,39 +221,29 @@ class Robot_raw:
     def calcMToEGradient_kI(self):
         # first let's calculate the manipulability elipsoid
         M = self.jac_tri @ self.jac_tri.T
-#k = np.trace(M)
-# it should not matter how big the sphere is, just that it is biggert than the ellipsoid
-# so if i just choose, say, k = 2 i should be set
-# that that way i do not have to bother with derivating sigma wrt q cos it is's a constant
-#        k = np.trace(M)
-        k = 2
+        k = np.trace(M)
         sigma = k * np.eye(3)
         sigma_sqrt = scipy.linalg.fractional_matrix_power(sigma, 0.5)
         Theta = sigma_sqrt @ M @ sigma_sqrt
-
-        # this is the derivative of the manipulability jacobian w.r.t. joint angles
-   #     self.calcManipulabilityJacobian()
-
-        # we need M^-1 which might not exist in which case we'll return a 0 
-        # needs to throw an error or something along those lines in production tho
-        try:
-            M_inv = np.linalg.inv(M)
-        except np.linalg.LinAlgError as e:
-            print("ROKNUH U SINGULARITET!!!!!!!!!!!")
-#            M_inv = np.eye(M.shape[1], M.shape[0]) 
-            return np.array([0] * len(self.joints))
-
-
-        # now we right-mul M_inv by each partial derivative and do a trace of that
-        resulting_coefs = []
-        for i in range(len(self.joints)):
-            # we first need to calculate an appropriate element of the
-            # velocity manipulability ellipsoid
-            # J^x_i = mjac[i] @ J.T + J @ mjac[i].T
+        Theta_der_wrt_q_i = []
+        # calc the M derivate wrt q_is and same for Theta 
+        for i in range(self.ndof):
             M_der_by_q_i = self.mjac_tri[i] @ self.jac_tri.T + self.jac_tri @ self.mjac_tri[i].T
-            resulting_coefs.append(-2 * k_log * np.trace(M_der_by_q_i @ M_inv))
-        resulting_coefs = np.array(resulting_coefs)
-#        print(resulting_coefs)
+            Theta_der_wrt_q_i.append(sigma_sqrt @ M_der_by_q_i @ sigma_sqrt)
+        # now this is the E
+        E = np.array(Theta_der_wrt_q_i)
+
+        # to compute the derivative we have to use the frechet derivative
+        # on the [[Theta, E], [0, Theta]]
+#        gradMtoE = []
+        resulting_coefs = []
+        for i in range(self.ndof):
+            mat_for_frechet = np.vstack((np.hstack((Theta, E[i])), \
+                np.hstack((np.eye(3) - np.eye(3), Theta))))
+            frechet_der = scipy.linalg.logm(mat_for_frechet)
+            der_theta_q_i = frechet_der[0:3, -3:]
+            resulting_coefs.append(2 * np.trace(der_theta_q_i @ der_theta_q_i.T))
+
         return resulting_coefs
 
             
@@ -259,7 +251,7 @@ class Robot_raw:
     def drawState(self, ax, color_link):
         toBase = [np.array([[1,0,0,0], [0,1,0,0], [0,0,1,0], [0,0,0,1]])]
         drawOrientation(ax, toBase[-1][0:3,0:3], np.zeros((3,)))
-        for j in range(len(self.joints)):
+        for j in range(self.ndof):
             toBase.append(toBase[-1] @ self.joints[j].HomMat)
             drawOrientation(ax, toBase[-1][0:3,0:3], toBase[-1][0:3,3])
             drawVector(ax, -1* ( toBase[-2][0:3,3] - toBase[-1][0:3,3] ), toBase[-2][0:3,3],color_link)

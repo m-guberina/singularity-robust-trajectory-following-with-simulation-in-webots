@@ -62,11 +62,11 @@ def invKinm_PseudoInv(r, t):
 # we take into account the current theta (punish more if closer to the limit)
 # the formula is 3.57 in siciliano 
     theta_for_limits = []
-    for k in range(len(del_thet)):
-        theta_for_limits.append( (-1/len(del_thet)) * (r.joints[k].theta / (np.pi * 1.5)))
+    for k in range(r.ndof):
+        theta_for_limits.append( (-1/r.ndof) * (r.joints[k].theta / (np.pi * 1.5)))
     theta_for_limits = np.array(theta_for_limits)
 
-    del_thet += (np.eye(len(del_thet)) - psedo_inv @ r.jac_tri) @ theta_for_limits
+    del_thet += (np.eye(r.ndof) - psedo_inv @ r.jac_tri) @ theta_for_limits
 
     del_thet = clampVelocity(del_thet)
 
@@ -92,7 +92,7 @@ def invKinmSingAvoidance_PseudoInv(r, t):
     gradMtoE = r.calcMToEGradient_kM()
 #    print(gradMtoE)
 
-    del_thet += (np.eye(len(del_thet)) - psedo_inv @ r.jac_tri) @ gradMtoE
+    del_thet += (np.eye(r.ndof) - psedo_inv @ r.jac_tri) @ gradMtoE
 
     del_thet = clampVelocity(del_thet)
 
@@ -160,7 +160,7 @@ def invKinmGradDesc(r, t):
 
     error = np.sqrt(np.dot(e,e))
     thetas_start = []
-    for th in range(len(r.joints)):
+    for th in range(r.ndof):
         thetas_start.append(r.joints[th].theta)
     thetas_start = np.array(thetas_start)
 
@@ -220,14 +220,14 @@ def invKinmSingAvoidanceWithQP_kM(r, t):
         return scipy.optimize.LinearConstraint(r.jac_tri, e, e)
 
 
-    for bo in range(len(r.joints)):
+    for bo in range(r.ndof):
         lb.append(-3.0)
         ub.append(3.0)
     bounds = scipy.optimize.Bounds(lb, ub)
 
     error = np.sqrt(np.dot(e,e))
     thetas_start = []
-    for th in range(len(r.joints)):
+    for th in range(r.ndof):
         thetas_start.append(r.joints[th].theta)
     thetas_start = np.array(thetas_start)
 
@@ -284,14 +284,14 @@ def invKinmSingAvoidanceWithQP_kI(r, t):
         return scipy.optimize.LinearConstraint(r.jac_tri, e, e)
 
 
-    for bo in range(len(r.joints)):
+    for bo in range(r.ndof):
         lb.append(-3.0)
         ub.append(3.0)
     bounds = scipy.optimize.Bounds(lb, ub)
 
     error = np.sqrt(np.dot(e,e))
     thetas_start = []
-    for th in range(len(r.joints)):
+    for th in range(r.ndof):
         thetas_start.append(r.joints[th].theta)
     thetas_start = np.array(thetas_start)
 
