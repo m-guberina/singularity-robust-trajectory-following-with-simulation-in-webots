@@ -30,6 +30,8 @@ def clampVelocity(del_thet):
 # r is the Robot_raw
 # t is the target position
 
+
+
 def invKinm_Jac_T(r, t):
     e = t - r.p_e
     num = np.dot(e, r.jac_tri @ r.jac_tri.T @ e)

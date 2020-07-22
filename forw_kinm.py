@@ -9,30 +9,43 @@ import scipy.linalg
 #from drawing import *
 from joint_as_hom_mat import *
 
+"""
+The Robot_raw class is a collection of joints which
+together constitute the manipulator. 
+It has methods for calculating the Jacobian,
+the velocity manipulability Jacobian and two
+different methods for calculating a gradient
+toward a better manipulability positions.
 
-# we need an end effector (it's just a point as of now)
-# however i wont add it yet
-# it should have the 3 rotational degrees of freedom
-# but that requires further considerations
-# and it is not super-relevant at the moment
+The Jacobian is calculated from its geometric
+derivation as described in Siciliano chapter 3,
+and so is the velocity manipulability Jacobian,
+as described in Geometry Aware Manipulability 
+Learning, Tracking and Transfer or in 
+Symbolic differentiation of the velocity mapping for a serial kinematic chain,
+by Bruyninckx. Here i avoided the tensor 
+formulation as to my knowledge
+numpy does not support tensor operations.
 
 
-##########################################################3
-# NOTES regarding mapping to webots
-# i'll just comment drawing out for now
-# however, it would be nice if i had both later on
-# #crossvalidation
-# #multiple_output_options
+Calculations of the gradients are described in the 
+Singularity Avoidance Using Riemannian Geometry paper.
 
-##########################################################3
 
-# WHAT WEBOTS HAS AND THIS DID NOT
-# - physics
-# - many processes sorounding the controler
-# - it's own API for everything 
-# - remembers state 
-# - which is then to be read from sensors (ex. positions of ee or motors)
-##########################################################3
+notes on code:
+- we are doing only positions, not orientations
+- dh parameters are read from a file
+- there is no other way to import a robot
+
+
+"""
+# TODO 
+# TODO 
+# TODO 
+# TODO add the following flags:
+# one for (not) drawing in matplotlib
+# one for (not) using Webots API
+
 
 
 # add a drawing flag so that you can turn it on and off

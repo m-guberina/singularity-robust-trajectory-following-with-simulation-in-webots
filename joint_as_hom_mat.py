@@ -1,5 +1,16 @@
 import numpy as np
 
+"""
+Here we formalize the robot as a series of rigid bodies (links)
+connected with joints. Each joint is endowed with a coordinate frame
+which is derived via the Denavit-Hartenberg parameters. 
+Here all joints are revolute, meaning rotating, and rotations are 
+reprezented as rotation matrices.
+Rotating matrices and translation vectors are combined
+into homogenous matrices and then a frame change amounts
+to matrix multiplication.
+"""
+
 # deriving the homogeneus transformation matrix
 # as a series of transformations between two coordinate frames
 # detailed description: Wikipedia article on Denavit-Hartenberg parameters
@@ -86,9 +97,10 @@ class Joint:
 # there you can only SENSE via SENSORS what the result of the rotation is
 # DO CONTROL, not numerics!
 ########################################################################
-# the solution is simple:
-# do the rotation periodically and "rotate" by the angles given by reading PositionSensors,
-# i.e. read the current state in the simulation and transport it here where we can do math
+# we still need this internal reprezentation however because from it
+# we calculate new angles. 
+# the connection to the simulation/reality via sensors is then
+# the act of reading from the sensors and "rotating" by the read amount
 
 # bottom line
 #############
