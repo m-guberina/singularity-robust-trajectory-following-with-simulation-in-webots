@@ -257,6 +257,8 @@ def invKinmSingAvoidanceWithQP_kM(r, t):
 #        del_thet = np.array(del_thet)
 #    print(del_thet)
     del_thet = clampVelocity(del_thet)
+    print("del_thet before clamping")
+    print(del_thet)
     return del_thet
 
 
@@ -320,6 +322,8 @@ def invKinmSingAvoidanceWithQP_kI(r, t):
 
 #        del_thet = np.array(del_thet)
 #    print(del_thet)
+    print("del_thet before clamping")
+    print(del_thet)
     del_thet = clampVelocity(del_thet)
     return del_thet
 
