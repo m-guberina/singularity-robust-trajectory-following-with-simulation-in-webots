@@ -95,21 +95,7 @@ class Joint:
 # there rotation equates to setting positions/velocities to individual motors,
 # which then do the moving.
 # there you can only SENSE via SENSORS what the result of the rotation is
-# DO CONTROL, not numerics!
-########################################################################
-# we still need this internal reprezentation however because from it
-# we calculate new angles. 
-# the connection to the simulation/reality via sensors is then
-# the act of reading from the sensors and "rotating" by the read amount
-
-# bottom line
-#############
-# the class joint reprezents the abstract coordinate systems we need to 
-# calculate the jacobian
-# thus the collection of all joints stores the state (the current angles)
-# and allows for that state to be mapped to the jacobian
-# thus, the simulation control is not done here, but in the Robot class
-# via the forward kinematics method
+# in this brach we essentially just do numerics!
 
 
     def rotate_numerically(self,theta, clamp):

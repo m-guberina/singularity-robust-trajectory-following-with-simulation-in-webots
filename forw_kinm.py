@@ -51,10 +51,9 @@ notes on code:
 # add a drawing flag so that you can turn it on and off
 class Robot_raw:
     #def __init__(self, clamp):
-    def __init__(self, simulated_robot_motors, sensors):
-        #self.clamp = clamp
-        self.motors = simulated_robot_motors
-        self.sensors = sensors
+    def __init__(self):
+#        self.motors = simulated_robot_motors
+#        self.sensors = sensors
         self.clamp = 0
         self.joints = []
         fil = open('ur10e_dh_parameters_from_the_ur_site', 'r')
@@ -269,48 +268,16 @@ class Robot_raw:
             drawOrientation(ax, toBase[-1][0:3,0:3], toBase[-1][0:3,3])
             drawVector(ax, -1* ( toBase[-2][0:3,3] - toBase[-1][0:3,3] ), toBase[-2][0:3,3],color_link)
 
-   # the thetas are to be read from position sensors 
-    def updateJointsAndJacobian(self):
-        thetas = np.array(readJointState(self.sensors))
-# potential clamping for joint rotation limits
-        for i in range(len(thetas)):
+
+
+    def forwardKinmNumericsOnly(self, thetas):
+        for i in range(self.ndof):
             if self.clamp == 1:
                 self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
             else:
                 self.joints[i].rotate_numerically(thetas[i], self.clamp)
         self.calcJacobian()
 
-
-
-    def forwardKinmViaPositions(self, thetas, simulated_robot_motors, sensors):
-# potential clamping for joint rotation limits
-#   ==> ur10e does not have joint limits, but other robots might
-# the horribly arcsin(sin(x)) is here because it motors take positions from -pi to pi
-# it is highly advisable that this be calculated by a modulus or something along those lines
-# because calculating transcendental functions is way more expensive
-        for i in range(len(thetas)):
-            if self.clamp == 1:
-                #TODO write this out
-                self.joints[i].rotate(clampTheta(self.joints[i].theta + thetas[i]), self.clamp)
-            else:
-#                self.motors[i].setPosition(np.arcsin(np.sin(np.array(self.joints[i].theta + thetas[i]))))
-                self.motors[i].setPosition(self.joints[i].theta + thetas[i])
-            # now we update the joints and calculate the jacobian
-            # perhaps that should be done before motor update, idk, TODO try it out
-        self.updateJointsAndJacobian()
-
-
-    def forwardKinmViaVelocities(self, thetas):
-# potential clamping for joint velocity limits
-#   ==> done in the ik method!
-        for i in range(len(thetas)):
-            if self.clamp == 1:
-                # TODO
-                self.joints[i].rotate(clampTheta(self.joints[i].theta + thetas[i]), self.clamp)
-            else:
-                self.motors[i].setVelocity(thetas[i])
-        # this should probably be done in a smarter way
-        self.updateJointsAndJacobian()
 
 
 

@@ -1,7 +1,5 @@
 """control_test controller."""
 
-from controller import Robot, Motor, PositionSensor, GPS, Display
-from webots_api_helper_funs import *
 from forw_kinm import *
 from inv_kinm import *
 #from anim_func import *
@@ -56,26 +54,8 @@ def generateCircleForTesting(robot):
     pass
 
 
-# for validation purposes, we must plot this circle
-def drawCircle(radius, height, robot):
-    display = robot.getDisplay("display")
-    display.setColor(0xFF0FF)
-    display.drawOval(64,64,45,45)
-
-
-# create the Robot instance.
-robot = Robot()
-# get the time step of the current world.
-timestep = int(robot.getBasicTimeStep())
 
 print("eto me")
-
-#enable gps
-gps = robot.getGPS("ee_gps")
-gps.enable(10)
-
-
-
 
 
 # Main loop:
@@ -84,10 +64,7 @@ gps.enable(10)
 #t = np.array([-0.60,0.07,0.75929])
 t = np.array([-0.59702256, -0.424394371, 0.64633786])
 iter_num = 0
-motors = getAllMotors(robot)
-initializeMotorsForPosition(motors)
-sensors = getAndInitAllSensors(robot)
-r = Robot_raw(motors, sensors)
+r = Robot_raw()
 
 
 # get me a curve yo
@@ -96,15 +73,8 @@ curve_parameter_step = 0.1
 radius = 0.35
 height = 0.67
 x_0 = -0.99
-drawCircle(radius, height, robot)
-
-for motor in motors:
-    motor.setVelocity(float('inf'))
    
-#for motor in motors:
-#        motor.setPosition(0.0)
-
-inited = 0
+iter_max = 1000
 
 # initialize a file in which measurements are to be stored
 # for later analysis and visualization
@@ -112,31 +82,16 @@ inited = 0
 # and the smallest eigenvalue is the right column
 measurements_file = open("./data/sing_av_pinv_mem_data", "w")
 
-while robot.step(timestep) != -1:
- #   print("r.p_e:", r.p_e)
-#    print("target:", t)
-    ee_pos_gps = gps.getValues()
-    ee_pos_gps[0] = -1 * ee_pos_gps[0]
-    z_cp = ee_pos_gps[1]
-    ee_pos_gps[1] = ee_pos_gps[2]
-    ee_pos_gps[2] = z_cp
-#    print("gps position:", ee_pos_gps)
+while iter_num < iter_max:
 
-
-    current_joint_positions = readJointState(sensors)
     iter_num += 1
 
-    #e = t - np.array(ee_pos_gps)
-#    e = t - r.p_e
+    e = t - r.p_e
 
-    # get me circle positions
-#    t = goInACirleViaPositionAroundLiftedX(radius, height, x_0, curve_parameter)
-#    t = goInACirleViaPositionAroundZ(radius, height, curve_parameter)
-    e = t - np.array(ee_pos_gps)
     error = np.sqrt(np.dot(e,e))
     print("error = ", error)
     print("target =", t)
-    print("position =", ee_pos_gps)
+    print("position =", r.p_e)
 
 
     # for ik, give a random spot
@@ -146,13 +101,8 @@ while robot.step(timestep) != -1:
             t = t + 0.3
 
 
-# do not give me the next point before i got to the one you gave me
-    if inited != 0: 
-        curve_parameter += curve_parameter_step
-        inited = 0
-    else:
-        if error < 0.01:
-            inited = 1
+    # for trajectory following
+    #curve_parameter += curve_parameter_step
 
     # right from the maric paper
     # you prolly want to update this jacobian via forwKinm function (by first
@@ -202,7 +152,7 @@ while robot.step(timestep) != -1:
 #    print(current_joint_positions)
 #    r.printJacobianForSomeAngles(current_joint_positions)
   #  setMotorSpeeds(motors, del_thet)
-    r.forwardKinmViaPositions(del_thet, motors, sensors)
+    r.forwardKinmNumericsOnly(del_thet)
 
 #    motor_positions = readJointState(sensors)
 #    print(motor_positions)
