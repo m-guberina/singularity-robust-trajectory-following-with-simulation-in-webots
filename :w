@@ -163,18 +163,16 @@ def invKinm_dampedSquares(r, t):
  Also, here q^T is just the 0 vector
 """ 
 def invKinmQP(r, t):
-    P = np.eye(r.ndof, dtype="double")
-    q = np.array([0] * r.ndof, dtype="double") # should be q imo
-    G = np.eye(r.ndof, dtype="double")
+    P = np.eye(r.ndof)
+    q = np.array([0] * r.ndof) # should be q imo
     e = t - r.p_e
-    b = np.array(e, dtype="double")
-    A = np.array(r.jac_tri, dtype="double")
-    lb = np.array([-3] * r.ndof, dtype="double")
-    ub = np.array([3] * r.ndof, dtype="double")
-    h = ub
+    b = e
+    A = r.jac_tri
+    meq = 0
 
 
-    del_thet = solve_qp(P, q, G, h, A, b, lb, ub, solver="osqp")
+    result = quadprog.solve_qp(G, a, C, b, meq)
+    del_thet = result[0]
     print(del_thet)
 
 
