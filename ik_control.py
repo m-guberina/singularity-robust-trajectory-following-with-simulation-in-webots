@@ -74,86 +74,88 @@ radius = 0.35
 height = 0.67
 x_0 = -0.99
    
-iter_max = 1000
+#iter_max = 1000
 
 # initialize a file in which measurements are to be stored
 # for later analysis and visualization
 # manipulability measure is left column
 # and the smallest eigenvalue is the right column
-measurements_file = open("./data/sing_av_pinv_mem_data", "w")
-
-while iter_num < iter_max:
-
-    iter_num += 1
-
-    e = t - r.p_e
-
-    error = np.sqrt(np.dot(e,e))
-    print("error = ", error)
-    print("target =", t)
-    print("position =", r.p_e)
+#measurements_file = open("./data/sing_av_pinv_mem_data", "w")
+measurements_file_no_sing_avoid = open("./data/no_sing_avoid_200_inv_kinms", "w")
+measurements_file_E_kI = open("./data/E_kI_200_inv_kinms", "w")
+measurements_file_E_kM = open("./data/E_kM_200_inv_kinms", "w")
 
 
-    # for ik, give a random spot
-    if error < 0.02:
-        t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(0, 0.75)])
-        if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
-            t = t + 0.3
+for broj in range(4):
+    number_of_points = 0
 
+    if broj == 0:
+        measurements_file = open("./data/no_sing_avoid_200_inv_kinms", "w")
 
-    # for trajectory following
-    #curve_parameter += curve_parameter_step
+    if broj == 1:
+        measurements_file.close()
+        measurements_file = open("./data/E_kI_200_inv_kinms", "w")
 
-    # right from the maric paper
-    # you prolly want to update this jacobian via forwKinm function (by first
-    # reading the sensors and then calculating the jacobian (but it could be unnecessary too)
-#    r.calcJacobian()
-    #M = r.jacobian @ r.jacobian.T
-    M = r.jac_tri @ r.jac_tri.T
-    manip_index = np.sqrt(np.linalg.det(M))
-    eigenvals, eigvecs = np.linalg.eig(M)
+    if broj == 2:
+        measurements_file.close()
+        measurements_file = open("./data/E_kM_200_inv_kinms", "w")
 
-    print("trace of M = ", np.trace(M))
+    if broj == 3:
+        measurements_file.close()
+        print("we are finished!")
+        print("the generated datapoints are in the data folder and the relevant file are:")
+        print("1. no_sing_avoid_200_inv_kinms")
+        print("2. E_kI_200_inv_kinms")
+        print("3. E_kM_200_inv_kinms")
+        print("")
+        print("Each file is a csv, with \";\" as a separator.")
+        print("The entries are: manipulability_measure, smallest eigenval of M, largest eigenval of M")
 
-    # now write this to the measurements file
-    measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + "\n")
-    # and stop after you have finished going around the shape
-    if curve_parameter > 16.0:
-        print("WE DONE")
         sys.exit(0)
+# 200 for the maximum number of point to be reached by the ik algorithms
+    while number_of_points < 200:
+        iter_num += 1
+        e = t - r.p_e
+        error = np.sqrt(np.dot(e,e))
 
 
-
-    # here you choose which ik method you want
-    # just pass the robot_raw instance and the target position
-    # they use the calculated position of ee
-    # of course that can be modified
-#    del_thet = invKinm_Jac_T(r, t)
-#    del_thet = invKinm_PseudoInv(r, t)
-#    del_thet = invKinm_dampedSquares(r, t)
-    del_thet = invKinmQP(r, t)
-#    del_thet = invKinmSingAvoidance_PseudoInv(r, t)
-#    del_thet = invKinmSingAvoidanceWithQP_kM(r, t)
-#    del_thet = invKinmSingAvoidanceWithQP_kI(r, t)
+        # for ik, give a random spot
+        if error < 0.01:
+            t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75)])
+            number_of_points += 1
+    #        if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
+    #            t = t + 0.3
+            print("point number:", number_of_points)
+            print("target =", t)
 
 
+        # for trajectory following
+        #curve_parameter += curve_parameter_step
 
-#    del_thet = np.array(invKinm_Jac_T(r, t)) / 3
-#    del_thet = np.array(invKinm_PseudoInv(r, t)) / 3
-#    del_thet = np.array(invKinm_dampedSquares(r, t)) / 3
-#    del_thet = np.array(invKinmQP(r, t)) / 3
-#    del_thet = np.array(invKinmSingAvoidance_PseudoInv(r, t)) / 3
-#    del_thet = np.array(invKinmSingAvoidanceWithQP(r, t)) / 3
+        # right from the maric paper
+        M = r.jac_tri @ r.jac_tri.T
+        manip_index = np.sqrt(np.linalg.det(M))
+        eigenvals, eigvecs = np.linalg.eig(M)
 
-# clamping for joint rotation limits
-#    print("del_thet")
-#    print(del_thet)
-#    print("current_joint_positions")
-#    print(current_joint_positions)
-#    r.printJacobianForSomeAngles(current_joint_positions)
-  #  setMotorSpeeds(motors, del_thet)
-    r.forwardKinmNumericsOnly(del_thet)
 
-#    motor_positions = readJointState(sensors)
-#    print(motor_positions)
+        # now write this to the measurements file
+        measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + ";" + str(eigenvals[eigenvals.argmax()]) + "\n")
+        # and stop after you have finished going around the shape
+    #    if curve_parameter > 16.0:
+    #        print("WE DONE")
+    #        sys.exit(0)
+
+
+        # here you choose which ik method you want
+        # just pass the robot_raw instance and the target position
+        # they use the calculated position of ee
+        # of course that can be modified
+        if broj == 0:
+            del_thet = invKinmQP(r, t)
+        if broj == 1:
+            del_thet = invKinmQPSingAvoidE_kM(r, t)
+        if broj == 2:
+            del_thet = invKinmQPSingAvoidE_kI(r, t)
+        r.forwardKinmNumericsOnly(del_thet)
+
 
