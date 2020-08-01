@@ -7,6 +7,8 @@ from matplotlib.animation import FuncAnimation
 import matplotlib.colors as colr
 import sys
 import scipy.optimize
+from qpsolvers import solve_qp
+from qpsolvers import dense_solvers 
 
 ##################################################
 # everything drawing related will just be deleted
@@ -130,6 +132,28 @@ def invKinm_dampedSquares(r, t):
 #        del_thet = clampVelocity(del_thet)
 
     return del_thet
+
+
+def invKinmQP(r, t):
+    P = np.eye(r.ndof, dtype="double")
+    q = np.array([0] * r.ndof, dtype="double") # should be q imo
+    #G = np.eye(r.ndof, dtype="double")
+    G = None
+    e = t - r.p_e
+    b = np.array(e, dtype="double")
+    A = np.array(r.jac_tri, dtype="double")
+    lb = np.array([-3] * r.ndof, dtype="double")
+    ub = np.array([3] * r.ndof, dtype="double")
+    #h = ub
+    h = None
+ 
+ 
+    del_thet = solve_qp(P, q, G, h, A, b, lb, ub, solver="ecos")
+    print(del_thet)
+ 
+    return del_thet
+
+
 
 
 
@@ -321,6 +345,48 @@ def invKinmSingAvoidanceWithQP_kI(r, t):
 #        del_thet = np.array(del_thet)
 #    print(del_thet)
     del_thet = clampVelocity(del_thet)
+    return del_thet
+
+
+
+def invKinmQPSingAvoidE_kI(r, t):
+    P = np.eye(r.ndof, dtype="double")
+    q = 0.2 * np.array(r.calcMToEGradient_kI(), dtype="double")
+    #G = np.eye(r.ndof, dtype="double")
+    G = None
+    e = t - r.p_e
+    b = np.array(e, dtype="double")
+    A = np.array(r.jac_tri, dtype="double")
+    lb = np.array([-3] * r.ndof, dtype="double")
+    ub = np.array([3] * r.ndof, dtype="double")
+    #h = ub
+    h = None
+ 
+ 
+    del_thet = solve_qp(P, q, G, h, A, b, lb, ub, solver="ecos")
+    print(del_thet)
+ 
+    return del_thet
+
+
+
+def invKinmQPSingAvoidE_kM(r, t):
+    P = np.eye(r.ndof, dtype="double")
+    q = 0.2 * np.array(r.calcMToEGradient_kM(), dtype="double")
+    #G = np.eye(r.ndof, dtype="double")
+    G = None
+    e = t - r.p_e
+    b = np.array(e, dtype="double")
+    A = np.array(r.jac_tri, dtype="double")
+    lb = np.array([-3] * r.ndof, dtype="double")
+    ub = np.array([3] * r.ndof, dtype="double")
+    #h = ub
+    h = None
+ 
+ 
+    del_thet = solve_qp(P, q, G, h, A, b, lb, ub, solver="ecos")
+    print(del_thet)
+ 
     return del_thet
 
 

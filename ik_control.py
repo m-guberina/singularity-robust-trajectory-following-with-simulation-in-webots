@@ -182,9 +182,12 @@ while robot.step(timestep) != -1:
 #    del_thet = invKinm_PseudoInv(r, t)
 #    del_thet = invKinm_dampedSquares(r, t)
 #    del_thet = invKinmGradDesc(r, t)
+#    del_thet = invKinmQP(r, t)
+    del_thet = invKinmQPSingAvoidE_kI(r, t)
+#    del_thet = invKinmQPSingAvoidE_kM(r, t)
 #    del_thet = invKinmSingAvoidance_PseudoInv(r, t)
 #    del_thet = invKinmSingAvoidanceWithQP_kM(r, t)
-    del_thet = invKinmSingAvoidanceWithQP_kI(r, t)
+#    del_thet = invKinmSingAvoidanceWithQP_kI(r, t)
 
 
 
