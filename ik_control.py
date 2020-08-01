@@ -1,4 +1,4 @@
-"""control_test controller."""
+"c""control_test controller."""
 
 from forw_kinm import *
 from inv_kinm import *
@@ -131,17 +131,17 @@ while iter_num < iter_max:
 #    del_thet = invKinm_Jac_T(r, t)
 #    del_thet = invKinm_PseudoInv(r, t)
 #    del_thet = invKinm_dampedSquares(r, t)
-#    del_thet = invKinmGradDesc(r, t)
+    del_thet = invKinmQP(r, t)
 #    del_thet = invKinmSingAvoidance_PseudoInv(r, t)
 #    del_thet = invKinmSingAvoidanceWithQP_kM(r, t)
-    del_thet = invKinmSingAvoidanceWithQP_kI(r, t)
+#    del_thet = invKinmSingAvoidanceWithQP_kI(r, t)
 
 
 
 #    del_thet = np.array(invKinm_Jac_T(r, t)) / 3
 #    del_thet = np.array(invKinm_PseudoInv(r, t)) / 3
 #    del_thet = np.array(invKinm_dampedSquares(r, t)) / 3
-#    del_thet = np.array(invKinmGradDesc(r, t)) / 3
+#    del_thet = np.array(invKinmQP(r, t)) / 3
 #    del_thet = np.array(invKinmSingAvoidance_PseudoInv(r, t)) / 3
 #    del_thet = np.array(invKinmSingAvoidanceWithQP(r, t)) / 3
 

@@ -6,7 +6,8 @@ import mpl_toolkits.mplot3d.axes3d as p3
 from matplotlib.animation import FuncAnimation
 import matplotlib.colors as colr
 import sys
-import scipy.optimize
+#import scipy.optimize
+import quadprog
 
 ##################################################
 # everything drawing related will just be deleted
@@ -132,62 +133,52 @@ def invKinm_dampedSquares(r, t):
     return del_thet
 
 
+"""
+ qp formulation
+ ==============
+ the general syntax is the following:
+ (syntax from scaron.info/blog/quadratic-programming-in-python.html,
+ ney, from the quadprog docs)
 
-# qp formulation, solved with scipy
-def invKinmGradDesc(r, t):
-    
-    def getEEPos(thetas, r, t):
-        p_e = r.eePositionAfterForwKinm(thetas)
-        e = t - p_e
-        error = np.sqrt(np.dot(e,e))
-        return error
-    
-    def toOptim(thetas):
-        #return np.sqrt(np.dot(thetas, thetas))
-        return np.dot(thetas, thetas)
+ minimize 1/2 x.T G x + a.T x
+ subject to C.T x <= h
+            Ax = b
+
+
+ and we want the following
+ minimize q_dot^T W q_dot 
+ subject to J q_dot = e
+
+ For our purposes, P = I, where I is the indentity matrix is OK.
+ That can also be changed if desired, but is has to be SPD.
+
+ Later, we will and alpha * gradM_to_E * q_dot 
+ to the function to be minimized in order to get 
+ the singularity avoidance
+ 
+ The bounds will be set to +/- 3 because that's 
+ what was defined in the simulator, but they can
+ of course be changed to whatever makes sense.
+
+ Also, here q^T is just the 0 vector
+""" 
+def invKinmQP(r, t):
+    G = np.eye(r.ndof)
+    a = np.array([0] * r.ndof) # should be q imo
     e = t - r.p_e
-    lb = []
-    ub = []
-
-    def constraint(r, e):
-        # jac_tri @ del_thet must be equal to e
-        # when doing manipulability optimization it will be e + vec_toward_greater_manip
-        return scipy.optimize.LinearConstraint(r.jac_tri, e, e)
+    b = e
+    C = r.jac_tri
+    meq = 0
 
 
-    for bo in range(len(r.joints)):
-        lb.append(-3.0)
-        ub.append(3.0)
-    bounds = scipy.optimize.Bounds(lb, ub)
+    result = quadprog.solve_qp(G, a, C, b, meq)
+    del_thet = result[0]
+    print(del_thet)
 
-    error = np.sqrt(np.dot(e,e))
-    thetas_start = []
-    for th in range(r.ndof):
-        thetas_start.append(r.joints[th].theta)
-    thetas_start = np.array(thetas_start)
 
-    lin_constraint = constraint(r, e)
-    if (r.clamp == 1):
-        res = scipy.optimize.minimize(toOptim, thetas_start, method='SLSQP', constraints=lin_constraint, bounds=bounds)
-    else:
-        res = scipy.optimize.minimize(toOptim, thetas_start, method='SLSQP', constraints=lin_constraint)
-#        res = scipy.optimize.minimize(getEEPos, thetas_start, args=(r,t), method='SLSQP', constraints=lin_constraint, bounds=bounds)
-#        res = scipy.optimize.minimize(toOptim, thetas_start, method='CG', bounds=bounds)
-    # without constraints it returns some crazy big numbres like 10**300 or sth
-    # so something is seriously wrong there
-    del_thet = []
-    for bla in range(len(res.x)):
-        del_thet.append(float(res.x[bla]))
-#            del_thet.append(res.x[bla] - 0.01)
-#        for bla in range(len(res.x)):
-#            del_thet.append(float(res.x[bla]))
-#            del_thet[bla] += 0.01
-#            print(del_thet[bla])
-#        print("del_thet")
-#        print(del_thet)
+    
 
-#        del_thet = np.array(del_thet)
-    del_thet = clampVelocity(del_thet)
+
     return del_thet
 
 
