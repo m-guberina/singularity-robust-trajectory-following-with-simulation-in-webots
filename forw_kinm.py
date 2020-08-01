@@ -256,7 +256,7 @@ class Robot_raw:
             der_theta_q_i = frechet_der[0:3, -3:]
             resulting_coefs.append(2 * np.trace(der_theta_q_i @ der_theta_q_i.T))
 
-        return resulting_coefs
+        return np.array(resulting_coefs)
 
             
 

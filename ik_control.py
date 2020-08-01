@@ -114,17 +114,21 @@ for broj in range(4):
         sys.exit(0)
 # 200 for the maximum number of point to be reached by the ik algorithms
     while number_of_points < 200:
-        iter_num += 1
         e = t - r.p_e
         error = np.sqrt(np.dot(e,e))
+        print("error:", error)
+        print("r.p_e:", r.p_e)
+        print("t:", t)
 
 
         # for ik, give a random spot
         if error < 0.01:
+            # write final configuration
+            measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + ";" + str(eigenvals[eigenvals.argmax()]) + "\n")
             t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75)])
             number_of_points += 1
-    #        if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
-    #            t = t + 0.3
+            if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
+                t = t + 0.3
             print("point number:", number_of_points)
             print("target =", t)
 
@@ -139,7 +143,6 @@ for broj in range(4):
 
 
         # now write this to the measurements file
-        measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + ";" + str(eigenvals[eigenvals.argmax()]) + "\n")
         # and stop after you have finished going around the shape
     #    if curve_parameter > 16.0:
     #        print("WE DONE")
@@ -151,11 +154,15 @@ for broj in range(4):
         # they use the calculated position of ee
         # of course that can be modified
         if broj == 0:
-            del_thet = invKinmQP(r, t)
+            #del_thet = invKinm_Jac_T(r, t)
+            del_thet = invKinm_dampedSquares(r, t)
+            #del_thet = invKinmQP(r, t)
         if broj == 1:
             del_thet = invKinmQPSingAvoidE_kM(r, t)
         if broj == 2:
             del_thet = invKinmQPSingAvoidE_kI(r, t)
+
+        # move by calculated amount
         r.forwardKinmNumericsOnly(del_thet)
 
 
