@@ -129,6 +129,7 @@ for broj in range(4):
         if error < 0.01 or n_of_tries_for_point > 20:
             if(n_of_tries_for_point > 20):
                 print("FAILED TO CONVERGE!!!!!")
+                print("i'm stuck at:", r.p_e)
             # write final configuration
             measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + ";" + str(eigenvals[eigenvals.argmax()]) + "\n")
             #t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75)])
