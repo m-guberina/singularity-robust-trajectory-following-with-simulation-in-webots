@@ -15,7 +15,7 @@ def calcAvgManipAndMinEigVal(data_file):
         line = data_lines[i].rstrip().split(";")
         manip = line[0]
         min_eigval = line[1]
-        maxn_eigval = line[2]
+        max_eigval = line[2]
         total_manip += float(manip)
         all_min_eigenvals += float(min_eigval)
         all_max_eigenvals += float(max_eigval)

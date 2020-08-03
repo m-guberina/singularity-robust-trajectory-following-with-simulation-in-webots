@@ -275,10 +275,25 @@ class Robot_raw:
             if self.clamp == 1:
                 self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
             else:
-                self.joints[i].rotate_numerically(thetas[i], self.clamp)
+                self.joints[i].rotate_numerically(thetas[i] + self.joints[i].theta, self.clamp)
         self.calcJacobian()
 
 
+    def forwardKinmNumericsOnlyDebug(self, thetas):
+        print("======================================")
+        for i in range(self.ndof):
+            if self.clamp == 1:
+                self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
+            else:
+                print("before:", self.joints[i].theta)
+                print("----------- +", thetas[i])
+                self.joints[i].rotate_numerically(thetas[i] + self.joints[i].theta, self.clamp)
+                print("after:", self.joints[i].theta)
+                print("")
+        print("")
+        print("")
+        print("")
+        self.calcJacobian()
 
 
 

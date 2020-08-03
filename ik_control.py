@@ -116,9 +116,9 @@ for broj in range(4):
     while number_of_points < 200:
         e = t - r.p_e
         error = np.sqrt(np.dot(e,e))
-        print("error:", error)
-        print("r.p_e:", r.p_e)
-        print("t:", t)
+        #print("error:", error)
+        #print("r.p_e:", r.p_e)
+        #print("t:", t)
 
 
         # for ik, give a random spot
@@ -155,8 +155,7 @@ for broj in range(4):
         # of course that can be modified
         if broj == 0:
             #del_thet = invKinm_Jac_T(r, t)
-            del_thet = invKinm_dampedSquares(r, t)
-            #del_thet = invKinmQP(r, t)
+            del_thet = invKinmQP(r, t)
         if broj == 1:
             del_thet = invKinmQPSingAvoidE_kM(r, t)
         if broj == 2:
