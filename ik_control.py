@@ -9,6 +9,7 @@ import numpy as np
 #from matplotlib.animation import FuncAnimation
 #import matplotlib.colors as colr
 import sys
+import subprocess
 import scipy.optimize
 import random
 
@@ -110,11 +111,13 @@ for broj in range(4):
         print("")
         print("Each file is a csv, with \";\" as a separator.")
         print("The entries are: manipulability_measure, smallest eigenval of M, largest eigenval of M")
+        print("check out the graphs for results")
+        proc = subprocess.run(["python3", "data/turn_data_into_info.py"])
 
         sys.exit(0)
 # 200 for the maximum number of point to be reached by the ik algorithms
     n_of_tries_for_point = 0
-    while number_of_points < 200:
+    while number_of_points < 100:
         n_of_tries_for_point += 1
 
 
@@ -125,13 +128,23 @@ for broj in range(4):
         #print("t:", t)
 
 
+
+
         # for ik, give a random spot
-        if error < 0.01 or n_of_tries_for_point > 20:
-            if(n_of_tries_for_point > 20):
-                print("FAILED TO CONVERGE!!!!!")
-                print("i'm stuck at:", r.p_e)
+        if error < 0.01 or n_of_tries_for_point > 50:
+            if(n_of_tries_for_point > 50):
+                print("FAILED TO CONVERGE in", n_of_tries_for_point, "steps!!!")
+                print("i got to", r.p_e, "and the error is:", error)
+            else:
+                print("i did it in,", n_of_tries_for_point, "steps")
+
             # write final configuration
+            # right from the paper
+            M = r.jac_tri @ r.jac_tri.T
+            manip_index = np.sqrt(np.linalg.det(M))
+            eigenvals, eigvecs = np.linalg.eig(M)
             measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + ";" + str(eigenvals[eigenvals.argmax()]) + "\n")
+
             #t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75)])
             t = np.array([random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70)])
             number_of_points += 1
@@ -144,12 +157,6 @@ for broj in range(4):
 
         # for trajectory following
         #curve_parameter += curve_parameter_step
-
-        # right from the maric paper
-        M = r.jac_tri @ r.jac_tri.T
-        manip_index = np.sqrt(np.linalg.det(M))
-        eigenvals, eigvecs = np.linalg.eig(M)
-
 
         # now write this to the measurements file
         # and stop after you have finished going around the shape
@@ -166,9 +173,9 @@ for broj in range(4):
             #del_thet = invKinm_Jac_T(r, t)
             del_thet = invKinmQP(r, t)
         if broj == 1:
-            del_thet = invKinmQPSingAvoidE_kM(r, t)
+            del_thet = invKinmQPSingAvoidE_kM(r, t) / 2
         if broj == 2:
-            del_thet = invKinmQPSingAvoidE_kI(r, t)
+            del_thet = invKinmQPSingAvoidE_kI(r, t) / 2
 
         # move by calculated amount
         r.forwardKinmNumericsOnly(del_thet)

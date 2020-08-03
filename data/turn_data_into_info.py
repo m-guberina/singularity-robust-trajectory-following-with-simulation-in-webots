@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 
 def calcAvgManipAndMinEigVal(data_file):
@@ -32,18 +33,45 @@ fig = plt.figure(1)
 #ax = fig.add_axes([0,0,1,1])
 methods = ["no sing. avoidance", "E = kM", "E = kI"]
 
-no_avoid = calcAvgManipAndMinEigVal("./no_sing_avoid_200_inv_kinms")
-E_kI = calcAvgManipAndMinEigVal("./E_kI_200_inv_kinms")
-E_kM = calcAvgManipAndMinEigVal("./E_kM_200_inv_kinms")
+
+current_dir = os.popen("pwd").read().strip().split("/")
+if current_dir[-1] == "data":
+    prefix = "./"
+else:
+    prefix = "./data/"
+
+no_avoid = calcAvgManipAndMinEigVal(prefix + "no_sing_avoid_200_inv_kinms")
+E_kI = calcAvgManipAndMinEigVal(prefix + "E_kI_200_inv_kinms")
+E_kM = calcAvgManipAndMinEigVal(prefix + "E_kM_200_inv_kinms")
 
 avg_manips = [no_avoid[0], E_kM[0], E_kI[0]]
 avg_min_eigvals = [no_avoid[1], E_kM[1], E_kI[1]]
 avg_max_eigvals = [no_avoid[2], E_kM[2], E_kI[2]]
 
-#plt.bar(methods, avg_min_eigvals)
+
+# first graph: average manipulability  measure
+
 #plt.bar(methods, avg_max_eigvals)
 plt.bar(methods, avg_manips)
 #plt.ylabel('Average manipulability')
+plt.ylabel('Manipulability measure')
+plt.title('Average manipubility index')
+
+# second graph: average minimum eigenvalue
+fig = plt.figure(2)
+#plt.ylabel('Average manipulability')
+plt.bar(methods, avg_min_eigvals)
 plt.ylabel('Eigenvalues')
-plt.title('Smallest eigenvalue')
+plt.title('Average smallest eigenvalue')
+
+
+
+# second graph: average minimum eigenvalue
+fig = plt.figure(3)
+#plt.ylabel('Average manipulability')
+plt.bar(methods, avg_max_eigvals)
+plt.ylabel('Eigenvalues')
+plt.title('Average highest eigenvalue')
+
+
 plt.show()
