@@ -40,7 +40,9 @@ avg_manips = [no_avoid[0], E_kM[0], E_kI[0]]
 avg_min_eigvals = [no_avoid[1], E_kM[1], E_kI[1]]
 avg_max_eigvals = [no_avoid[2], E_kM[2], E_kI[2]]
 
-plt.bar(methods, min_eigvals)
+#plt.bar(methods, avg_min_eigvals)
+#plt.bar(methods, avg_max_eigvals)
+plt.bar(methods, avg_manips)
 #plt.ylabel('Average manipulability')
 plt.ylabel('Eigenvalues')
 plt.title('Smallest eigenvalue')

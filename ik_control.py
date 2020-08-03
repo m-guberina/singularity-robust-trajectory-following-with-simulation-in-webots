@@ -113,7 +113,11 @@ for broj in range(4):
 
         sys.exit(0)
 # 200 for the maximum number of point to be reached by the ik algorithms
+    n_of_tries_for_point = 0
     while number_of_points < 200:
+        n_of_tries_for_point += 1
+
+
         e = t - r.p_e
         error = np.sqrt(np.dot(e,e))
         #print("error:", error)
@@ -122,15 +126,19 @@ for broj in range(4):
 
 
         # for ik, give a random spot
-        if error < 0.01:
+        if error < 0.01 or n_of_tries_for_point > 20:
+            if(n_of_tries_for_point > 20):
+                print("FAILED TO CONVERGE!!!!!")
             # write final configuration
             measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + ";" + str(eigenvals[eigenvals.argmax()]) + "\n")
-            t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75)])
+            #t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75)])
+            t = np.array([random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70)])
             number_of_points += 1
-            if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
-                t = t + 0.3
+#            if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
+#                t = t + 0.3
             print("point number:", number_of_points)
             print("target =", t)
+            n_of_tries_for_point = 0
 
 
         # for trajectory following
