@@ -236,7 +236,7 @@ class Robot_raw:
         k = np.trace(M)
         sigma = k * np.eye(3)
 #        sigma = 10 * k * np.eye(3)
-        sigma_sqrt = scipy.linalg.fractional_matrix_power(sigma, 0.5)
+        sigma_sqrt = scipy.linalg.fractional_matrix_power(sigma, -0.5)
         Theta = sigma_sqrt @ M @ sigma_sqrt
         Theta_der_wrt_q_i = []
         # calc the M derivate wrt q_is and same for Theta 

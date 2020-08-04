@@ -350,7 +350,8 @@ def invKinmSingAvoidanceWithQP_kI(r, t):
 
 def invKinmQPSingAvoidE_kI(r, t):
     P = np.eye(r.ndof, dtype="double")
-    q = 0.5 * np.array(r.calcMToEGradient_kI(), dtype="double")
+#    q = 0.5 * np.array(r.calcMToEGradient_kI(), dtype="double")
+    q = np.array(r.calcMToEGradient_kI(), dtype="double")
     #G = np.eye(r.ndof, dtype="double")
     G = None
     e = t - r.p_e
@@ -370,7 +371,8 @@ def invKinmQPSingAvoidE_kI(r, t):
 
 def invKinmQPSingAvoidE_kM(r, t):
     P = np.eye(r.ndof, dtype="double")
-    q = 0.5 * np.array(r.calcMToEGradient_kM(), dtype="double")
+#    q = 0.5 * np.array(r.calcMToEGradient_kM(), dtype="double")
+    q = np.array(r.calcMToEGradient_kM(), dtype="double")
     #G = np.eye(r.ndof, dtype="double")
     G = None
     e = t - r.p_e

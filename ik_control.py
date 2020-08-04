@@ -173,9 +173,9 @@ for broj in range(4):
             #del_thet = invKinm_Jac_T(r, t)
             del_thet = invKinmQP(r, t)
         if broj == 1:
-            del_thet = invKinmQPSingAvoidE_kM(r, t) / 2
+            del_thet = invKinmQPSingAvoidE_kM(r, t) / 3
         if broj == 2:
-            del_thet = invKinmQPSingAvoidE_kI(r, t) / 2
+            del_thet = invKinmQPSingAvoidE_kI(r, t) / 3
 
         # move by calculated amount
         r.forwardKinmNumericsOnly(del_thet)
