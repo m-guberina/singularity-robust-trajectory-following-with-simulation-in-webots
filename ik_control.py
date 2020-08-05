@@ -87,7 +87,7 @@ iter_num = 0
 motors = getAllMotors(robot)
 initializeMotorsForPosition(motors)
 sensors = getAndInitAllSensors(robot)
-r = Robot_raw(motors, sensors)
+r = Robot_raw(motors=motors, sensors=sensors)
 
 
 # get me a curve yo
@@ -205,7 +205,7 @@ while robot.step(timestep) != -1:
 #    print(current_joint_positions)
 #    r.printJacobianForSomeAngles(current_joint_positions)
   #  setMotorSpeeds(motors, del_thet)
-    r.forwardKinmViaPositions(del_thet, motors, sensors)
+    r.forwardKinmViaPositions(del_thet)
 
 #    motor_positions = readJointState(sensors)
 #    print(motor_positions)

@@ -14,6 +14,11 @@ def getAllMotors(robot):
     return motors
 
 
+# for validation purposes, we must plot this circle
+def drawCircle(radius, height, robot):
+    display = robot.getDisplay("display")
+    display.setColor(0xFF0FF)
+    display.drawOval(64,64,45,45)
 
 def setMotorSpeeds(motors, speeds):
     for i in range(len(motors)):

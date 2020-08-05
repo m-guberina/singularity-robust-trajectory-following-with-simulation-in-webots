@@ -49,12 +49,24 @@ notes on code:
 
 
 # add a drawing flag so that you can turn it on and off
+# if sim is to be had, you must pass motors=[list_of_motors] 
+# and sensors=[list_of_sensors] 
 class Robot_raw:
     #def __init__(self, clamp):
-    def __init__(self, simulated_robot_motors, sensors):
-        #self.clamp = clamp
-        self.motors = simulated_robot_motors
-        self.sensors = sensors
+    def __init__(self, **kwargs):
+        try:
+            self.motors = kwargs["motors"]
+            self.sensors = kwargs["sensors"]
+            self.sim = 1
+        except KeyError:
+            if len(kwargs) != 0:
+                print(" if sim is to be had, you must pass \
+                        motors=[list_of_motors] \
+                         and sensors=[list_of_sensors] in named args syntax")
+                exit(1)
+            else:
+                self.sim = 0
+            pass
         self.clamp = 0
         self.joints = []
         fil = open('ur10e_dh_parameters_from_the_ur_site', 'r')
@@ -236,8 +248,10 @@ class Robot_raw:
         M = self.jac_tri @ self.jac_tri.T
         k = np.trace(M)
         sigma = k * np.eye(3)
-        sigma_sqrt = scipy.linalg.fractional_matrix_power(sigma, 0.5)
+#        sigma = 10 * k * np.eye(3)
+        sigma_sqrt = scipy.linalg.fractional_matrix_power(sigma, -0.5)
         Theta = sigma_sqrt @ M @ sigma_sqrt
+        log_Theta = scipy.linalg.logm(Theta)
         Theta_der_wrt_q_i = []
         # calc the M derivate wrt q_is and same for Theta 
         for i in range(self.ndof):
@@ -255,9 +269,9 @@ class Robot_raw:
                 np.hstack((np.eye(3) - np.eye(3), Theta))))
             frechet_der = scipy.linalg.logm(mat_for_frechet)
             der_theta_q_i = frechet_der[0:3, -3:]
-            resulting_coefs.append(2 * np.trace(der_theta_q_i @ der_theta_q_i.T))
+            resulting_coefs.append(2 * np.trace(der_theta_q_i @ log_Theta.T))
 
-        return resulting_coefs
+        return np.array(resulting_coefs)
 
             
 
@@ -269,7 +283,7 @@ class Robot_raw:
             drawOrientation(ax, toBase[-1][0:3,0:3], toBase[-1][0:3,3])
             drawVector(ax, -1* ( toBase[-2][0:3,3] - toBase[-1][0:3,3] ), toBase[-2][0:3,3],color_link)
 
-   # the thetas are to be read from position sensors 
+
     def updateJointsAndJacobian(self):
         thetas = np.array(readJointState(self.sensors))
 # potential clamping for joint rotation limits
@@ -282,36 +296,49 @@ class Robot_raw:
 
 
 
-    def forwardKinmViaPositions(self, thetas, simulated_robot_motors, sensors):
+    def forwardKinmViaPositions(self, thetas):
 # potential clamping for joint rotation limits
 #   ==> ur10e does not have joint limits, but other robots might
 # the horribly arcsin(sin(x)) is here because it motors take positions from -pi to pi
 # it is highly advisable that this be calculated by a modulus or something along those lines
 # because calculating transcendental functions is way more expensive
         for i in range(len(thetas)):
+            # clamp
             if self.clamp == 1:
-                #TODO write this out
-                self.joints[i].rotate(clampTheta(self.joints[i].theta + thetas[i]), self.clamp)
+                if self.sim == 1:
+                    self.motors[i].setPosition(clampTheta(self.joints[i].theta + thetas[i]))
+                    self.updateJointsAndJacobian()
+                else:
+                    self.joints[i].rotate_numerically(clampTheta(self.joints[i].theta + thetas[i]), self.clamp)
+                    self.calcJacobian()
+            # no clamp
             else:
-#                self.motors[i].setPosition(np.arcsin(np.sin(np.array(self.joints[i].theta + thetas[i]))))
-                self.motors[i].setPosition(self.joints[i].theta + thetas[i])
+                if self.sim == 1:
+                    self.motors[i].setPosition(self.joints[i].theta + thetas[i])
+                    self.updateJointsAndJacobian()
+                else:
+                    self.joints[i].rotate_numerically(thetas[i] + self.joints[i].theta, self.clamp)
+                    self.calcJacobian()
+
             # now we update the joints and calculate the jacobian
             # perhaps that should be done before motor update, idk, TODO try it out
-        self.updateJointsAndJacobian()
 
 
-    def forwardKinmViaVelocities(self, thetas):
-# potential clamping for joint velocity limits
-#   ==> done in the ik method!
-        for i in range(len(thetas)):
+    def forwardKinmNumericsOnlyDebug(self, thetas):
+        print("======================================")
+        for i in range(self.ndof):
             if self.clamp == 1:
-                # TODO
-                self.joints[i].rotate(clampTheta(self.joints[i].theta + thetas[i]), self.clamp)
+                self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
             else:
-                self.motors[i].setVelocity(thetas[i])
-        # this should probably be done in a smarter way
-        self.updateJointsAndJacobian()
-
+                print("before:", self.joints[i].theta)
+                print("----------- +", thetas[i])
+                self.joints[i].rotate_numerically(thetas[i] + self.joints[i].theta, self.clamp)
+                print("after:", self.joints[i].theta)
+                print("")
+        print("")
+        print("")
+        print("")
+        self.calcJacobian()
 
 
 
