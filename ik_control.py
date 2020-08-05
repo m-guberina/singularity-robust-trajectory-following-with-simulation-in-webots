@@ -117,7 +117,7 @@ for broj in range(4):
         sys.exit(0)
 # 200 for the maximum number of point to be reached by the ik algorithms
     n_of_tries_for_point = 0
-    while number_of_points < 100:
+    while number_of_points < 50:
         n_of_tries_for_point += 1
 
 
@@ -131,7 +131,7 @@ for broj in range(4):
 
 
         # for ik, give a random spot
-        if error < 0.01 or n_of_tries_for_point > 50:
+        if error < 0.01 or n_of_tries_for_point > 100:
             if(n_of_tries_for_point > 50):
                 print("FAILED TO CONVERGE in", n_of_tries_for_point, "steps!!!")
                 print("i got to", r.p_e, "and the error is:", error)
@@ -142,8 +142,12 @@ for broj in range(4):
             # right from the paper
             M = r.jac_tri @ r.jac_tri.T
             manip_index = np.sqrt(np.linalg.det(M))
-            eigenvals, eigvecs = np.linalg.eig(M)
-            measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + ";" + str(eigenvals[eigenvals.argmax()]) + "\n")
+            # let's try with diagonal entries of the diag. mat. in SVD decomposition
+#            eigenvals, eigvecs = np.linalg.eig(M)
+#            measurements_file.write(str(manip_index) + ";" + str(eigenvals[eigenvals.argmin()]) + ";" + str(eigenvals[eigenvals.argmax()]) + "\n")
+            diagonal_of_svd_of_M = np.linalg.svd(M)[1]
+            measurements_file.write(str(manip_index) + ";" + str(diagonal_of_svd_of_M[diagonal_of_svd_of_M.argmin()]) \
+                    + ";" + str(diagonal_of_svd_of_M[diagonal_of_svd_of_M.argmax()]) + "\n")
 
             #t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75)])
             t = np.array([random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70)])
@@ -175,7 +179,7 @@ for broj in range(4):
         if broj == 1:
             del_thet = invKinmQPSingAvoidE_kM(r, t) / 3
         if broj == 2:
-            del_thet = invKinmQPSingAvoidE_kI(r, t) / 3
+            del_thet = invKinmQPSingAvoidE_kI(r, t) / 5
 
         # move by calculated amount
         r.forwardKinmNumericsOnly(del_thet)

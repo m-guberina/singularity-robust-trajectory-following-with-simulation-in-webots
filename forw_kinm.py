@@ -238,6 +238,7 @@ class Robot_raw:
 #        sigma = 10 * k * np.eye(3)
         sigma_sqrt = scipy.linalg.fractional_matrix_power(sigma, -0.5)
         Theta = sigma_sqrt @ M @ sigma_sqrt
+        log_Theta = scipy.linalg.logm(Theta)
         Theta_der_wrt_q_i = []
         # calc the M derivate wrt q_is and same for Theta 
         for i in range(self.ndof):
@@ -255,7 +256,7 @@ class Robot_raw:
                 np.hstack((np.eye(3) - np.eye(3), Theta))))
             frechet_der = scipy.linalg.logm(mat_for_frechet)
             der_theta_q_i = frechet_der[0:3, -3:]
-            resulting_coefs.append(2 * np.trace(der_theta_q_i @ der_theta_q_i.T))
+            resulting_coefs.append(2 * np.trace(der_theta_q_i @ log_Theta.T))
 
         return np.array(resulting_coefs)
 
