@@ -56,6 +56,14 @@ def generateCircleForTesting(robot):
 
 
 
+def error_test(robot, t):
+    e = t - r.p_e
+    if e[0] < 0.001 and e[1] < 0.001 and e[2] < 0.001:
+        return True
+    else:
+        return False
+
+
 print("eto me")
 
 
@@ -131,8 +139,8 @@ for broj in range(4):
 
 
         # for ik, give a random spot
-        if error < 0.001 or n_of_tries_for_point > 100:
-            if(n_of_tries_for_point > 50):
+        if error_test(r, t) or n_of_tries_for_point > 100:
+            if(n_of_tries_for_point > 100):
                 print("FAILED TO CONVERGE in", n_of_tries_for_point, "steps!!!")
                 print("i got to", r.p_e, "and the error is:", error)
             else:
