@@ -117,7 +117,7 @@ for broj in range(4):
         sys.exit(0)
 # 200 for the maximum number of point to be reached by the ik algorithms
     n_of_tries_for_point = 0
-    while number_of_points < 50:
+    while number_of_points < 150:
         n_of_tries_for_point += 1
 
 
@@ -131,7 +131,7 @@ for broj in range(4):
 
 
         # for ik, give a random spot
-        if error < 0.01 or n_of_tries_for_point > 100:
+        if error < 0.001 or n_of_tries_for_point > 100:
             if(n_of_tries_for_point > 50):
                 print("FAILED TO CONVERGE in", n_of_tries_for_point, "steps!!!")
                 print("i got to", r.p_e, "and the error is:", error)
@@ -177,9 +177,9 @@ for broj in range(4):
             #del_thet = invKinm_Jac_T(r, t)
             del_thet = invKinmQP(r, t)
         if broj == 1:
-            del_thet = invKinmQPSingAvoidE_kM(r, t) / 3
+            del_thet = invKinmQPSingAvoidE_kM(r, t) #/ 3
         if broj == 2:
-            del_thet = invKinmQPSingAvoidE_kI(r, t) / 5
+            del_thet = invKinmQPSingAvoidE_kI(r, t) #/ 3
 
         # move by calculated amount
         r.forwardKinmNumericsOnly(del_thet)
