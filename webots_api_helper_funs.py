@@ -11,6 +11,7 @@ def getAllMotors(robot):
     motors.append(robot.getMotor('wrist_1_joint'))
     motors.append(robot.getMotor('wrist_2_joint'))
     motors.append(robot.getMotor('wrist_3_joint'))
+    print("imported motors")
     return motors
 
 
@@ -45,6 +46,7 @@ def initializeMotorsForPosition(motors):
 
     
     setMotorSpeeds(motors, speeds)
+    print("did motor init")
 
 
 def getAndInitAllSensors(robot):
@@ -62,6 +64,7 @@ def getAndInitAllSensors(robot):
     for sensor in sensors:
         sensor.enable(10)
 
+    print("imported and inited sensors")
     return sensors
 
 def readJointState(sensors):
