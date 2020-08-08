@@ -251,7 +251,6 @@ class Robot_raw:
     # let's actually strech toward the sphere sigma = kI
     def calcMToEGradient_kI(self):
         # first let's calculate the manipulability elipsoid
-
         M = self.jacobian @ self.jacobian.T
         M = M[0:3, 0:3]
         k = np.trace(M)
