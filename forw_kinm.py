@@ -69,7 +69,7 @@ class Robot_raw:
             pass
         self.clamp = 0
         self.joints = []
-        fil = open('ur10e_dh_parameters_from_the_ur_site', 'r')
+        fil = open('testing_dh_parameters', 'r')
         params = fil.read().split('\n')
         params.pop()
         for p in params:
@@ -200,6 +200,9 @@ class Robot_raw:
             mjac_j = mjac_j[0:6,1:]
             mjac_j_tri = mjac_j[0:3,:]
             mjac.append(mjac_j)
+#            print("unutar calcJac")
+#            print(mjac_j)
+#            print("unutar calcJac")
             mjac_tri.append(mjac_j_tri)
             mjac_j = np.array([0,0,0,0,0,1]).reshape(6,1)
         self.mjac = mjac
@@ -245,12 +248,15 @@ class Robot_raw:
     # let's actually strech toward the sphere sigma = kI
     def calcMToEGradient_kI(self):
         # first let's calculate the manipulability elipsoid
-        M = self.jac_tri @ self.jac_tri.T
+
+        M = self.jacobian @ self.jacobian.T
+        M = M[0:3, 0:3]
         k = np.trace(M)
         sigma = k * np.eye(3)
 #        sigma = 10 * k * np.eye(3)
         sigma_sqrt = scipy.linalg.fractional_matrix_power(sigma, -0.5)
         Theta = sigma_sqrt @ M @ sigma_sqrt
+
         log_Theta = scipy.linalg.logm(Theta)
         Theta_der_wrt_q_i = []
         # calc the M derivate wrt q_is and same for Theta 
@@ -325,20 +331,41 @@ class Robot_raw:
 
 
     def forwardKinmNumericsOnlyDebug(self, thetas):
+        for i in range(len(thetas)):
+            # clamp
+            if self.clamp == 1:
+                if self.sim == 1:
+                    self.motors[i].setPosition(clampTheta(thetas[i]))
+                    self.updateJointsAndJacobian()
+                else:
+                    self.joints[i].rotate_numerically(clampTheta( thetas[i]), self.clamp)
+                    self.calcJacobian()
+            # no clamp
+            else:
+                if self.sim == 1:
+                    self.motors[i].setPosition(thetas[i])
+                    self.updateJointsAndJacobian()
+                else:
+                    self.joints[i].rotate_numerically(thetas[i] , self.clamp)
+                    self.calcJacobian()
+
+
+    def forwardKinmNumericsOnlyDebug2(self, thetas):
         print("======================================")
         for i in range(self.ndof):
             if self.clamp == 1:
                 self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
             else:
-                print("before:", self.joints[i].theta)
-                print("----------- +", thetas[i])
-                self.joints[i].rotate_numerically(thetas[i] + self.joints[i].theta, self.clamp)
-                print("after:", self.joints[i].theta)
-                print("")
+        #        print("----------- +", thetas[i])
+                self.joints[i].rotate_numerically(thetas[i], self.clamp)
+        #        print("after:", self.joints[i].theta)
+        #        print("")
         print("")
         print("")
         print("")
         self.calcJacobian()
+#        print(self.jacobian)
+        print(self.mjac)
 
 
 

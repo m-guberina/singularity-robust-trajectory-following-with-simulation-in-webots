@@ -81,7 +81,8 @@ print("eto me")
 # - perform simulation steps until Webots is stopping the controller
 #t = np.array([0.07,0.7,0.75929])
 #t = np.array([-0.60,0.07,0.75929])
-t = np.array([-0.59702256, -0.424394371, 0.64633786])
+#t = np.array([-0.59702256, -0.424394371, 0.64633786])
+t = np.array([-0.1617, -0.1901, 1.0250])
 iter_num = 0
 
 if sim == "no_sim":
@@ -162,7 +163,8 @@ for broj in range(4):
 # 200 for the maximum number of point to be reached by the ik algorithms
     n_of_tries_for_point = 0
     while number_of_points < total_number_of_points:
-        robot.step(timestep)
+        if sim == "sim":
+            robot.step(timestep)
         iter_num += 1
         n_of_tries_for_point += 1
 
@@ -235,5 +237,19 @@ for broj in range(4):
 
         # move by calculated amount
         r.forwardKinmViaPositions(del_thet)
+
+
+
+        ############ some debugging ############
+        q0 = np.array([1.1778, -1.5286,  2.0600,  2.9207, -1.0143, -0.2353])
+        r.forwardKinmNumericsOnlyDebug(q0)
+        for joint in r.joints:
+            print(joint.theta)
+        r.calcJacobian()
+        print("the resulting coefficients!!!")
+        print(r.calcMToEGradient_kI())
+        print("ik solution")
+        print(invKinmQPSingAvoidE_kI(r, t))
+        exit()
 
 
