@@ -69,7 +69,7 @@ class Robot_raw:
             pass
         self.clamp = 0
         self.joints = []
-        fil = open('testing_dh_parameters', 'r')
+        fil = open('ur10e_dh_parameters_from_the_ur_site', 'r')
         params = fil.read().split('\n')
         params.pop()
         for p in params:
