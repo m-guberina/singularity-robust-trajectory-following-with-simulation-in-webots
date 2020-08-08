@@ -162,7 +162,8 @@ for broj in range(4):
 # 200 for the maximum number of point to be reached by the ik algorithms
     n_of_tries_for_point = 0
     while number_of_points < total_number_of_points:
-        robot.step(timestep)
+        if sim == "sim":
+            robot.step(timestep)
         iter_num += 1
         n_of_tries_for_point += 1
 

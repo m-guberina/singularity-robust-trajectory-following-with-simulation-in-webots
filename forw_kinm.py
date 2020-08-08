@@ -212,7 +212,8 @@ class Robot_raw:
     # implementation of maric formula 12 (rightmostpart)
     def calcMToEGradient_kM(self):
         # first let's calculate the manipulability elipsoid
-        M = self.jac_tri @ self.jac_tri.T
+        M = self.jacobian @ self.jacobian.T
+        M = M[0:3, 0:3]
         k = np.trace(M)
         k_log = np.log(k)
 
@@ -245,7 +246,8 @@ class Robot_raw:
     # let's actually strech toward the sphere sigma = kI
     def calcMToEGradient_kI(self):
         # first let's calculate the manipulability elipsoid
-        M = self.jac_tri @ self.jac_tri.T
+        M = self.jacobian @ self.jacobian.T
+        M = M[0:3, 0:3]
         k = np.trace(M)
         sigma = k * np.eye(3)
 #        sigma = 10 * k * np.eye(3)
