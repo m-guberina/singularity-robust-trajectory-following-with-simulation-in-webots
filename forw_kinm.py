@@ -215,7 +215,8 @@ class Robot_raw:
     # implementation of maric formula 12 (rightmostpart)
     def calcMToEGradient_kM(self):
         # first let's calculate the manipulability elipsoid
-        M = self.jac_tri @ self.jac_tri.T
+        M = self.jacobian @ self.jacobian.T
+        M = M[0:3, 0:3]
         k = np.trace(M)
         k_log = np.log(k)
 
@@ -238,7 +239,9 @@ class Robot_raw:
             # we first need to calculate an appropriate element of the
             # velocity manipulability ellipsoid
             # J^x_i = mjac[i] @ J.T + J @ mjac[i].T
-            M_der_by_q_i = self.mjac_tri[i] @ self.jac_tri.T + self.jac_tri @ self.mjac_tri[i].T
+            #M_der_by_q_i = self.mjac_tri[i] @ self.jac_tri.T + self.jac_tri @ self.mjac_tri[i].T
+            M_der_by_q_i = self.mjac[i] @ self.jacobian.T + self.jacobian @ self.mjac[i].T
+            M_der_by_q_i = M_der_by_q_i[0:3, 0:3]
             resulting_coefs.append(-2 * k_log * np.trace(M_der_by_q_i @ M_inv))
         resulting_coefs = np.array(resulting_coefs)
 #        print(resulting_coefs)
@@ -261,7 +264,8 @@ class Robot_raw:
         Theta_der_wrt_q_i = []
         # calc the M derivate wrt q_is and same for Theta 
         for i in range(self.ndof):
-            M_der_by_q_i = self.mjac_tri[i] @ self.jac_tri.T + self.jac_tri @ self.mjac_tri[i].T
+            M_der_by_q_i = self.mjac[i] @ self.jacobian.T + self.jacobian @ self.mjac[i].T
+            M_der_by_q_i = M_der_by_q_i[0:3, 0:3]
             Theta_der_wrt_q_i.append(sigma_sqrt @ M_der_by_q_i @ sigma_sqrt)
         # now this is the E
         E = np.array(Theta_der_wrt_q_i)
@@ -313,18 +317,19 @@ class Robot_raw:
             if self.clamp == 1:
                 if self.sim == 1:
                     self.motors[i].setPosition(clampTheta(self.joints[i].theta + thetas[i]))
-                    self.updateJointsAndJacobian()
                 else:
                     self.joints[i].rotate_numerically(clampTheta(self.joints[i].theta + thetas[i]), self.clamp)
-                    self.calcJacobian()
             # no clamp
             else:
                 if self.sim == 1:
                     self.motors[i].setPosition(self.joints[i].theta + thetas[i])
-                    self.updateJointsAndJacobian()
                 else:
                     self.joints[i].rotate_numerically(thetas[i] + self.joints[i].theta, self.clamp)
-                    self.calcJacobian()
+
+        if self.sim == 1:
+            self.updateJointsAndJacobian()
+        else:
+            self.calcJacobian()
 
             # now we update the joints and calculate the jacobian
             # perhaps that should be done before motor update, idk, TODO try it out

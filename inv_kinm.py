@@ -352,18 +352,18 @@ def invKinmQPSingAvoidE_kI(r, t):
     P = np.eye(r.ndof, dtype="double")
 #    q = 0.5 * np.array(r.calcMToEGradient_kI(), dtype="double")
     q = np.array(r.calcMToEGradient_kI(), dtype="double")
-    #G = np.eye(r.ndof, dtype="double")
+#    G = np.eye(r.ndof, dtype="double")
+#    G = []
     G = None
     e = t - r.p_e
     b = np.array(e, dtype="double")
     A = np.array(r.jac_tri, dtype="double")
     lb = np.array([-np.pi / 4 ] * r.ndof, dtype="double")
     ub = np.array([np.pi / 4] * r.ndof, dtype="double")
-    #h = ub
+#    h = ub 
     h = None
  
- 
-    #del_thet = solve_qp(P, q, G, h, A, b, lb, ub, solver="quadprog")
+#    del_thet = solve_qp(P, q, G, h, A, b, lb, ub, solver="quadprog")
     del_thet = solve_qp(P, q, G, h, A, b, lb, ub, solver="ecos")
  
     return del_thet

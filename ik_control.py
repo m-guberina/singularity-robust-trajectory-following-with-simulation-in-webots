@@ -125,7 +125,7 @@ measurements_file_E_kM = open("./data/E_kM_200_inv_kinms", "w")
 iter_num = 0
 
 if sim == "no_sim":
-    max_tries = 100
+    max_tries = 300
     total_number_of_points = 150
 else:
     max_tries = 100
@@ -227,13 +227,15 @@ for broj in range(4):
         # just pass the robot_raw instance and the target position
         # they use the calculated position of ee
         # of course that can be modified
+
+
         if broj == 0:
             #del_thet = invKinm_Jac_T(r, t)
-            del_thet = invKinmQP(r, t)
+            del_thet = invKinmQP(r, t) / 5
         if broj == 1:
-            del_thet = invKinmQPSingAvoidE_kM(r, t) #/ 3
+            del_thet = invKinmQPSingAvoidE_kI(r, t) / 5
         if broj == 2:
-            del_thet = invKinmQPSingAvoidE_kI(r, t) #/ 3
+            del_thet = invKinmQPSingAvoidE_kM(r, t) / 5
 
         # move by calculated amount
         r.forwardKinmViaPositions(del_thet)
@@ -241,15 +243,15 @@ for broj in range(4):
 
 
         ############ some debugging ############
-        q0 = np.array([1.1778, -1.5286,  2.0600,  2.9207, -1.0143, -0.2353])
-        r.forwardKinmNumericsOnlyDebug(q0)
-        for joint in r.joints:
-            print(joint.theta)
-        r.calcJacobian()
-        print("the resulting coefficients!!!")
-        print(r.calcMToEGradient_kI())
-        print("ik solution")
-        print(invKinmQPSingAvoidE_kI(r, t))
-        exit()
+#        q0 = np.array([1.1778, -1.5286,  2.0600,  2.9207, -1.0143, -0.2353])
+#        r.forwardKinmNumericsOnlyDebug(q0)
+#        for joint in r.joints:
+#            print(joint.theta)
+#        r.calcJacobian()
+#        print("the resulting coefficients!!!")
+#        print(r.calcMToEGradient_kI())
+#        print("ik solution")
+#        print(invKinmQPSingAvoidE_kI(r, t))
+#        exit()
 
 
