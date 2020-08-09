@@ -74,3 +74,72 @@ def readJointState(sensors):
     return joint_positions
 
 
+
+
+
+def getAllMotorsJaco(robot):
+    motors = []
+    motors.append(robot.getMotor('j2n6s300_joint_1'))
+    motors.append(robot.getMotor('j2n6s300_joint_2'))
+    motors.append(robot.getMotor('j2n6s300_joint_3'))
+    motors.append(robot.getMotor('j2n6s300_joint_4'))
+    motors.append(robot.getMotor('j2n6s300_joint_5'))
+    motors.append(robot.getMotor('j2n6s300_joint_6'))
+#    motors.append(robot.getMotor('j2n6s300_joint7'))
+    print("imported motors")
+    return motors
+
+
+def getAndInitAllSensorsJaco(robot):
+    sensors = []
+    sensors.append(robot.getPositionSensor('j2n6s300_joint_1_sensor'))
+    sensors.append(robot.getPositionSensor('j2n6s300_joint_2_sensor'))
+    sensors.append(robot.getPositionSensor('j2n6s300_joint_3_sensor'))
+    sensors.append(robot.getPositionSensor('j2n6s300_joint_4_sensor'))
+    sensors.append(robot.getPositionSensor('j2n6s300_joint_5_sensor'))
+    sensors.append(robot.getPositionSensor('j2n6s300_joint_6_sensor'))
+#    sensors.append(robot.getPositionSensor('j2n6s300_joint7_sensor'))
+   
+   # now we must specify how often do sensors get read in miliseconds
+   # i've put 10ms since this seems like it should work smoothly,
+   # but ofc you should play with this value later on
+    for sensor in sensors:
+        sensor.enable(10)
+
+    print("imported and inited sensors")
+    return sensors
+
+
+
+
+def getAllMotorsKuka(robot):
+    motors = []
+    motors.append(robot.getMotor('joint_a1'))
+    motors.append(robot.getMotor('joint_a2'))
+    motors.append(robot.getMotor('joint_a3'))
+    motors.append(robot.getMotor('joint_a4'))
+    motors.append(robot.getMotor('joint_a5'))
+    motors.append(robot.getMotor('joint_a6'))
+    motors.append(robot.getMotor('joint_a7'))
+    print("imported motors")
+    return motors
+
+
+def getAndInitAllSensorsKuka(robot):
+    sensors = []
+    sensors.append(robot.getPositionSensor('joint_a1_sensor'))
+    sensors.append(robot.getPositionSensor('joint_a2_sensor'))
+    sensors.append(robot.getPositionSensor('joint_a3_sensor'))
+    sensors.append(robot.getPositionSensor('joint_a4_sensor'))
+    sensors.append(robot.getPositionSensor('joint_a5_sensor'))
+    sensors.append(robot.getPositionSensor('joint_a6_sensor'))
+    sensors.append(robot.getPositionSensor('joint_a7_sensor'))
+   
+   # now we must specify how often do sensors get read in miliseconds
+   # i've put 10ms since this seems like it should work smoothly,
+   # but ofc you should play with this value later on
+    for sensor in sensors:
+        sensor.enable(10)
+
+    print("imported and inited sensors")
+    return sensors
