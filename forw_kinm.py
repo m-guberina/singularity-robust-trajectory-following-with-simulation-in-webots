@@ -57,19 +57,29 @@ class Robot_raw:
         try:
             self.motors = kwargs["motors"]
             self.sensors = kwargs["sensors"]
+            robot_name = kwargs["robot_name"]
             self.sim = 1
         except KeyError:
-            if len(kwargs) != 0:
-                print(" if sim is to be had, you must pass \
-                        motors=[list_of_motors] \
+            if len(kwargs) > 1:
+                print(" if sim is to be had, you must pass \n \
+                        motors=[list_of_motors] \n \
                          and sensors=[list_of_sensors] in named args syntax")
                 exit(1)
             else:
                 self.sim = 0
+                robot_name = "no_sim"
             pass
         self.clamp = 0
         self.joints = []
-        fil = open('testing_dh_parameters', 'r')
+        if robot_name == "no_sim":
+            fil = open('testing_dh_parameters', 'r')
+        if robot_name == "UR10e":
+            fil = open('./ur10e_dh_parameters_from_the_ur_site', 'r')
+        if robot_name == "base_link":
+            fil = open('kuka_lbw_iiwa_dh_params', 'r')
+        if robot_name == "j2n6s300":
+            fil = open('j2n6s300_dh_params', 'r')
+
         params = fil.read().split('\n')
         params.pop()
         for p in params:
@@ -391,7 +401,7 @@ class Robot_raw:
         print("")
         self.calcJacobian()
 #        print(self.jacobian)
-        print(self.mjac)
+#        print(self.mjac)
 
 
 
