@@ -31,7 +31,7 @@ def calcAvgManipAndMinEigVal(data_file):
 
 fig = plt.figure(1)
 #ax = fig.add_axes([0,0,1,1])
-methods = ["no sing. avoidance", "E = kM", "E = kI"]
+methods = ["no sing. avoidance", "E = kM", "E = kI", "manip. max."]
 
 
 current_dir = os.popen("pwd").read().strip().split("/")
@@ -43,10 +43,11 @@ else:
 no_avoid = calcAvgManipAndMinEigVal(prefix + "no_sing_avoid_200_inv_kinms")
 E_kI = calcAvgManipAndMinEigVal(prefix + "E_kI_200_inv_kinms")
 E_kM = calcAvgManipAndMinEigVal(prefix + "E_kM_200_inv_kinms")
+manip_max = calcAvgManipAndMinEigVal(prefix + "ManipMax_200_inv_kinms")
 
-avg_manips = [no_avoid[0], E_kM[0], E_kI[0]]
-avg_min_eigvals = [no_avoid[1], E_kM[1], E_kI[1]]
-avg_max_eigvals = [no_avoid[2], E_kM[2], E_kI[2]]
+avg_manips = [no_avoid[0], E_kM[0], E_kI[0], manip_max[0]]
+avg_min_eigvals = [no_avoid[1], E_kM[1], E_kI[1], manip_max[1]]
+avg_max_eigvals = [no_avoid[2], E_kM[2], E_kI[2], manip_max[2]]
 
 
 # first graph: average manipulability  measure

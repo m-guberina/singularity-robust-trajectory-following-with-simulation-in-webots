@@ -1,4 +1,4 @@
-"c""control_test controller."""
+"""control_test controller."""
 
 from forw_kinm import *
 from inv_kinm import *
@@ -122,6 +122,7 @@ x_0 = -0.99
 measurements_file_no_sing_avoid = open("./data/no_sing_avoid_200_inv_kinms", "w")
 measurements_file_E_kI = open("./data/E_kI_200_inv_kinms", "w")
 measurements_file_E_kM = open("./data/E_kM_200_inv_kinms", "w")
+measurements_file_manip_max = open("./data/ManipMax_200_inv_kinms", "w")
 iter_num = 0
 
 if sim == "no_sim":
@@ -132,7 +133,7 @@ else:
     total_number_of_points = 10
     
 
-for broj in range(4):
+for broj in range(5):
     number_of_points = 0
 
     if broj == 0:
@@ -147,6 +148,10 @@ for broj in range(4):
         measurements_file = open("./data/E_kM_200_inv_kinms", "w")
 
     if broj == 3:
+        measurements_file.close()
+        measurements_file = open("./data/ManipMax_200_inv_kinms", "w")
+
+    if broj == 4:
         measurements_file.close()
         print("we are finished!")
         print("the generated datapoints are in the data folder and the relevant file are:")
@@ -225,7 +230,7 @@ for broj in range(4):
 
         # here you choose which ik method you want
         # just pass the robot_raw instance and the target position
-        # they use the calculated position of ee
+       # they use the calculated position of ee
         # of course that can be modified
 
 
@@ -236,6 +241,10 @@ for broj in range(4):
             del_thet = invKinmQPSingAvoidE_kI(r, t) / 5
         if broj == 2:
             del_thet = invKinmQPSingAvoidE_kM(r, t) / 5
+        if broj == 3:
+            del_thet = invKinmQPSingAvoidManipMax(r, t) / 5
+
+
 
         # move by calculated amount
         r.forwardKinmViaPositions(del_thet)
@@ -245,13 +254,18 @@ for broj in range(4):
         ############ some debugging ############
 #        q0 = np.array([1.1778, -1.5286,  2.0600,  2.9207, -1.0143, -0.2353])
 #        r.forwardKinmNumericsOnlyDebug(q0)
-#        for joint in r.joints:
-#            print(joint.theta)
-#        r.calcJacobian()
+#        print(r.calcMToEGradient_kM())
+##        for joint in r.joints:
+##            print(joint.theta)
+##        r.calcJacobian()
 #        print("the resulting coefficients!!!")
-#        print(r.calcMToEGradient_kI())
-#        print("ik solution")
-#        print(invKinmQPSingAvoidE_kI(r, t))
+#        print(invKinmQPSingAvoidManipMax(r, t))
+#        invKinmQPSingAvoidManipMax(r, t)
+#        print("")
+#        print("")
+#        print("")
+##        print("ik solution")
+##        print(invKinmQPSingAvoidE_kI(r, t))
 #        exit()
-
+#
 

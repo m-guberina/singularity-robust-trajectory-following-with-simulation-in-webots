@@ -69,7 +69,7 @@ class Robot_raw:
             pass
         self.clamp = 0
         self.joints = []
-        fil = open('ur10e_dh_parameters_from_the_ur_site', 'r')
+        fil = open('testing_dh_parameters', 'r')
         params = fil.read().split('\n')
         params.pop()
         for p in params:
@@ -198,6 +198,8 @@ class Robot_raw:
 
             # with that we calculated J derivative w.r.t. joint j, so append that and move on
             mjac_j = mjac_j[0:6,1:]
+#            print("mjac_j", j + 1)
+#            print(mjac_j)
             mjac_j_tri = mjac_j[0:3,:]
             mjac.append(mjac_j)
 #            print("unutar calcJac")
@@ -217,7 +219,9 @@ class Robot_raw:
         # first let's calculate the manipulability elipsoid
         M = self.jacobian @ self.jacobian.T
         M = M[0:3, 0:3]
-        k = np.trace(M)
+#        k = np.trace(M)
+        k = 2
+#        print(k)
         k_log = np.log(k)
 
         # this is the derivative of the manipulability jacobian w.r.t. joint angles
@@ -281,6 +285,24 @@ class Robot_raw:
             resulting_coefs.append(2 * np.trace(der_theta_q_i @ log_Theta.T))
 
         return np.array(resulting_coefs)
+
+
+    def calcManipMaxGrad(self):
+        M = self.jacobian @ self.jacobian.T
+#        M = M[0:3, 0:3]
+        resulting_coefs = []
+        print("pinv")
+        print(np.linalg.pinv(self.jacobian))
+        for i in range(self.ndof):
+            A = self.mjac[i] @ np.linalg.pinv(self.jacobian)
+            print("A", i)
+            print(A)
+#            A = A[0:3, 0:3]
+            resulting_coefs.append(-1 * np.sqrt(np.linalg.det(M)) * np.trace(A))
+
+        return np.array(resulting_coefs)
+
+
 
             
 
