@@ -57,7 +57,7 @@ class Robot_raw:
         try:
             self.motors = kwargs["motors"]
             self.sensors = kwargs["sensors"]
-            robot_name = kwargs["robot_name"]
+            self.robot_name = kwargs["robot_name"]
             self.sim = 1
         except KeyError:
             if len(kwargs) > 1:
@@ -67,18 +67,22 @@ class Robot_raw:
                 exit(1)
             else:
                 self.sim = 0
-                robot_name = "no_sim"
+                self.robot_name = "no_sim"
             pass
         self.clamp = 0
         self.joints = []
-        if robot_name == "no_sim":
+        if self.robot_name == "no_sim":
             fil = open('testing_dh_parameters', 'r')
-        if robot_name == "UR10e":
-            fil = open('./ur10e_dh_parameters_from_the_ur_site', 'r')
-        if robot_name == "base_link":
+            print("i'm using: testing_dh_parameters")
+        if self.robot_name == "UR10e":
+            fil = open('ur10e_dh_parameters_from_the_ur_site', 'r')
+            print('im using: ur10e_dh_parameters_from_the_ur_site')
+        if self.robot_name == "base_link":
             fil = open('kuka_lbw_iiwa_dh_params', 'r')
-        if robot_name == "j2n6s300":
+            print("i'm using: kuka_lbw_iiwa_dh_params")
+        if self.robot_name == "j2n6s300":
             fil = open('j2n6s300_dh_params', 'r')
+            print("i'm using: j2n6s300_dh_params")
 
         params = fil.read().split('\n')
         params.pop()
@@ -330,9 +334,15 @@ class Robot_raw:
 # potential clamping for joint rotation limits
         for i in range(len(thetas)):
             if self.clamp == 1:
-                self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
+                if self.robot_name == "base_link":
+                    self.joints[i].rotate_with_MDH(clampTheta(thetas[i]), self.clamp)
+                else:
+                    self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
             else:
-                self.joints[i].rotate_numerically(thetas[i], self.clamp)
+                if self.robot_name == "base_link":
+                    self.joints[i].rotate_with_MDH(thetas[i], self.clamp)
+                else:
+                    self.joints[i].rotate_numerically(thetas[i], self.clamp)
         self.calcJacobian()
 
 

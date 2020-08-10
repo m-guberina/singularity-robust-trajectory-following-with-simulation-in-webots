@@ -58,6 +58,19 @@ def createDHMat(d, theta, r, alpha):
                        [0,        0,       0,           1]  ])
     return DHMat
 
+
+def createModifiedDHMat(d, theta, r, alpha):
+    ct = np.cos(theta)
+    st = np.sin(theta)
+    ca = np.cos(alpha)
+    sa = np.sin(alpha)
+    MDHMat = np.array( [[ct, -1* st, 0, r], \
+                        [st * ca, ct * ca, -1* sa, -d * sa], \
+                        [st * sa, ct * sa, ca, d * ca], \
+                        [0, 0, 0, 1]])
+    return MDHMat
+
+
 # clamping of all joints to rotate only by 7/8 of the cirle
 # of course this can be changed to other limits as needed
 # however, it is hardcoded here because it's good enough for demonstrative purposes
@@ -105,6 +118,15 @@ class Joint:
         else:
             self.theta = theta
         self.HomMat = createDHMat(self.d, self.theta, self.r, self.alpha)
+
+    def rotate_with_MDH(self, theta, clamp):
+# potential clamping for joint rotation limits
+        if self.clamp == 1:
+            self.theta = clampTheta(theta)
+        else:
+            self.theta = theta
+        self.HomMat = createModifiedDHMat(self.d, self.theta, self.r, self.alpha)
+
 
     def __repr__(self):
         return str(self.HomMat)
