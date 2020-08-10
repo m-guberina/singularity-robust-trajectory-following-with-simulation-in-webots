@@ -82,13 +82,15 @@ print("eto me")
 #t = np.array([0.07,0.7,0.75929])
 #t = np.array([-0.60,0.07,0.75929])
 #t = np.array([-0.59702256, -0.424394371, 0.64633786])
-#t = np.array([-0.1617, -0.1901, 1.0250])
-t = np.array([1.017, 1.1901, 1.0250])
+t = np.array([-0.1617, -0.1901, 1.0250])
+#t = np.array([1.017, 1.1901, 1.0250])
 iter_num = 0
 
 if sim == "no_sim":
     r = Robot_raw(robot_name="no_sim")
+    damping = 5
 else:
+    damping = 1
     robot = Robot()
     timestep = int(robot.getBasicTimeStep())
     print("hey operating on:", robot.getName())
@@ -117,10 +119,10 @@ else:
 
 # get me a curve yo
 curve_parameter = 1
-curve_parameter_step = 0.1
-radius = 0.35
-height = 0.67
-x_0 = -0.99
+curve_parameter_step = 0.01
+radius = 0.4
+height = 0.50
+x_0 = -0.59
    
 #iter_max = 1000
 
@@ -181,9 +183,9 @@ for broj in range(5):
         if sim == "sim":
             robot.step(timestep)
         iter_num += 1
-        n_of_tries_for_point += 1
 
         if sim == "no_sim":
+            n_of_tries_for_point += 1
             e = t - r.p_e
         else:
             ee_pos_gps = gps.getValues()
@@ -193,10 +195,10 @@ for broj in range(5):
             ee_pos_gps[2] = z_cp
             current_joint_positions = readJointState(sensors)
             e = t - np.array(ee_pos_gps)
-            print("ee_pos_gps")
-            print(ee_pos_gps)
-            print("r.p_e")
-            print(r.p_e)
+         #   print("ee_pos_gps")
+         #   print(ee_pos_gps)
+         #   print("r.p_e")
+         #   print(r.p_e)
 
         error = np.sqrt(np.dot(e,e))
         #print("error:", error)
@@ -208,11 +210,22 @@ for broj in range(5):
 
         # for ik, give a random spot
         if error_test(r, t) or n_of_tries_for_point > max_tries:
-            if(n_of_tries_for_point > max_tries):
-                print("FAILED TO CONVERGE in", n_of_tries_for_point, "steps!!!")
-                print("i got to", r.p_e, "and the error is:", error)
-            else:
-                print("i did it in,", n_of_tries_for_point, "steps")
+            # in no_sim we do tests, in sim we do trajectory following
+            if sim == "no_sim":
+                if(n_of_tries_for_point > max_tries):
+                    print("FAILED TO CONVERGE in", n_of_tries_for_point, "steps!!!")
+                    print("i got to", r.p_e, "and the error is:", error)
+                else:
+                    print("i did it in,", n_of_tries_for_point, "steps")
+
+            if sim == "sim":
+                if curve_parameter > 8.0:
+                    broj +=1
+                    curve_parameter = 1.0
+                    break
+                curve_parameter += curve_parameter_step
+                t = goInACirleViaPositionAroundLiftedX(radius, height, x_0, curve_parameter)
+                print(curve_parameter)
 
 # alternative with eigenvalues
 #            eigenvals, eigvecs = np.linalg.eig(M)
@@ -225,21 +238,18 @@ for broj in range(5):
                         + ";" + str(diagonal_of_svd_of_M[diagonal_of_svd_of_M.argmax()]) + "\n")
 
             #t = np.array([random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75), random.uniform(-0.75, 0.75)])
-            t = np.array([random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70)])
-            number_of_points += 1
-#            if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
-#                t = t + 0.3
-            print("point number:", number_of_points)
-            print("target =", t)
-            n_of_tries_for_point = 0
+                t = np.array([random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70), random.uniform(-0.70, 0.70)])
+                number_of_points += 1
+    #            if np.abs(t[0]) + np.abs(t[1]) + np.abs(t[2]) < 0.45:
+    #                t = t + 0.3
+                print("point number:", number_of_points)
+                print("target =", t)
+                n_of_tries_for_point = 0
 
 
-        # for trajectory following
-        #curve_parameter += curve_parameter_step
-        # and stop after you have finished going around the shape
-    #    if curve_parameter > 16.0:
-    #        print("WE DONE")
-    #        sys.exit(0)
+            # for trajectory following
+            # and TODO stop after you have finished going around the shape
+
 
 
         # here you choose which ik method you want
@@ -247,16 +257,17 @@ for broj in range(5):
        # they use the calculated position of ee
         # of course that can be modified
 
+        
 
         if broj == 0:
             #del_thet = invKinm_Jac_T(r, t)
-            del_thet = invKinmQP(r, t) / 5
+            del_thet = invKinmQP(r, t) / damping
         if broj == 1:
-            del_thet = invKinmQPSingAvoidE_kI(r, t) / 5
+            del_thet = invKinmQPSingAvoidE_kI(r, t) / damping
         if broj == 2:
-            del_thet = invKinmQPSingAvoidE_kM(r, t) / 5
+            del_thet = invKinmQPSingAvoidE_kM(r, t) / damping
         if broj == 3:
-            del_thet = invKinmQPSingAvoidManipMax(r, t) / 5
+            del_thet = invKinmQPSingAvoidManipMax(r, t) / damping
 
 
 
