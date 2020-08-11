@@ -72,7 +72,7 @@ class Robot_raw:
         self.clamp = 0
         self.joints = []
         if self.robot_name == "no_sim":
-            fil = open('testing_dh_parameters', 'r')
+            fil = open('j2n6s300_dh_params', 'r')
             print("i'm using: testing_dh_parameters")
         if self.robot_name == "UR10e":
             fil = open('ur10e_dh_parameters_from_the_ur_site', 'r')
@@ -233,8 +233,8 @@ class Robot_raw:
         # first let's calculate the manipulability elipsoid
         M = self.jacobian @ self.jacobian.T
         M = M[0:3, 0:3]
-#        k = np.trace(M)
-        k = 2
+        k = np.trace(M)
+#        k = 2
 #        print(k)
         k_log = np.log(k)
 
@@ -303,14 +303,14 @@ class Robot_raw:
 
     def calcManipMaxGrad(self):
         M = self.jacobian @ self.jacobian.T
-#        M = M[0:3, 0:3]
+        M = M[0:3, 0:3]
         resulting_coefs = []
         print("pinv")
         print(np.linalg.pinv(self.jacobian))
         for i in range(self.ndof):
             A = self.mjac[i] @ np.linalg.pinv(self.jacobian)
-            print("A", i)
-            print(A)
+#            print("A", i)
+#            print(A)
 #            A = A[0:3, 0:3]
             resulting_coefs.append(-1 * np.sqrt(np.linalg.det(M)) * np.trace(A))
 
@@ -332,6 +332,10 @@ class Robot_raw:
     def updateJointsAndJacobian(self):
         thetas = np.array(readJointState(self.sensors))
 # potential clamping for joint rotation limits
+# offset for j2n6s300
+        if self.robot_name == "j2n6s300":
+            thetas = thetas + np.array([-0.05057063,  0.76650935,  1.72458435,  \
+                    2.16381104,  2.11609863,  1.57079633])
         for i in range(len(thetas)):
             if self.clamp == 1:
                 if self.robot_name == "base_link":
@@ -377,6 +381,9 @@ class Robot_raw:
 
 
     def forwardKinmNumericsOnlyDebug(self, thetas):
+        if self.robot_name == "j2n6s300":
+            thetas = thetas + np.array([-0.05057063,  0.76650935,  1.72458435,  \
+                    2.16381104,  2.11609863,  1.57079633])
         for i in range(len(thetas)):
             # clamp
             if self.clamp == 1:

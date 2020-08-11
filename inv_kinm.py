@@ -134,12 +134,13 @@ def invKinm_dampedSquares(r, t):
     return del_thet
 
 
-def invKinmQP(r, t):
+def invKinmQP(r, t, e=None):
     P = np.eye(r.ndof, dtype="double")
     q = np.array([0] * r.ndof, dtype="double") # should be q imo
     #G = np.eye(r.ndof, dtype="double")
     G = None
-    e = t - r.p_e
+    if e == None:
+        e = t - r.p_e
     b = np.array(e, dtype="double")
     A = np.array(r.jac_tri, dtype="double")
     lb = np.array([-3] * r.ndof, dtype="double")
@@ -348,14 +349,15 @@ def invKinmSingAvoidanceWithQP_kI(r, t):
 
 
 
-def invKinmQPSingAvoidE_kI(r, t):
+def invKinmQPSingAvoidE_kI(r, t, e=None):
     P = np.eye(r.ndof, dtype="double")
 #    q = 0.5 * np.array(r.calcMToEGradient_kI(), dtype="double")
     q = np.array(r.calcMToEGradient_kI(), dtype="double")
 #    G = np.eye(r.ndof, dtype="double")
 #    G = []
     G = None
-    e = t - r.p_e
+    if e == None:
+        e = t - r.p_e
     b = np.array(e, dtype="double")
     A = np.array(r.jac_tri, dtype="double")
     lb = np.array([-3] * r.ndof, dtype="double")
@@ -370,13 +372,14 @@ def invKinmQPSingAvoidE_kI(r, t):
 
 
 
-def invKinmQPSingAvoidE_kM(r, t):
+def invKinmQPSingAvoidE_kM(r, t, e=None):
     P = np.eye(r.ndof, dtype="double")
 #    q = 0.5 * np.array(r.calcMToEGradient_kM(), dtype="double")
     q = np.array(r.calcMToEGradient_kM(), dtype="double")
     #G = np.eye(r.ndof, dtype="double")
     G = None
-    e = t - r.p_e
+    if e == None:
+        e = t - r.p_e
     b = np.array(e, dtype="double")
     A = np.array(r.jac_tri, dtype="double")
     lb = np.array([-3] * r.ndof, dtype="double")
@@ -391,11 +394,12 @@ def invKinmQPSingAvoidE_kM(r, t):
 
 
 
-def invKinmQPSingAvoidManipMax(r, t):
+def invKinmQPSingAvoidManipMax(r, t, e=None):
     P = np.eye(r.ndof, dtype="double")
     q = np.array(r.calcManipMaxGrad(), dtype="double")
     G = None
-    e = t - r.p_e
+    if e == None:
+        e = t - r.p_e
     b = np.array(e, dtype="double")
     A = np.array(r.jac_tri, dtype="double")
     lb = np.array([-3] * r.ndof, dtype="double")
