@@ -72,7 +72,7 @@ class Robot_raw:
         self.clamp = 0
         self.joints = []
         if self.robot_name == "no_sim":
-            fil = open('j2n6s300_dh_params', 'r')
+            fil = open('./kuka_lbw_iiwa_dh_params', 'r')
             print("i'm using: testing_dh_parameters")
         if self.robot_name == "UR10e":
             fil = open('ur10e_dh_parameters_from_the_ur_site', 'r')
@@ -80,6 +80,9 @@ class Robot_raw:
         if self.robot_name == "base_link":
             fil = open('kuka_lbw_iiwa_dh_params', 'r')
             print("i'm using: kuka_lbw_iiwa_dh_params")
+        if self.robot_name == "j2n6s300":
+            fil = open('j2n6s300_dh_params', 'r')
+            print("i'm using: j2n6s300_dh_params")
         if self.robot_name == "j2n6s300":
             fil = open('j2n6s300_dh_params', 'r')
             print("i'm using: j2n6s300_dh_params")
@@ -334,19 +337,19 @@ class Robot_raw:
 # potential clamping for joint rotation limits
 # offset for j2n6s300
         if self.robot_name == "j2n6s300":
-            thetas = thetas + np.array([-0.05057063,  0.76650935,  1.72458435,  \
-                    2.16381104,  2.11609863,  1.57079633])
+            #thetas = thetas + np.array([np.pi,  np.pi,  np.pi,  \
+             #       np.pi,  0.0,  1.57079633])
+            #thetas = thetas + np.array([np.pi,  -1 * np.pi / 2,  -1* np.pi / 2,  \
+            #        0.0,  0.0,  np.pi / 2])
+            thetas = thetas + np.array([np.pi,  - np.pi / 2,  0.0,  \
+                    0.0,  0.0,  0.0])
+        if self.robot_name == "base_link":
+            thetas = thetas + np.array([np.pi, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) 
         for i in range(len(thetas)):
             if self.clamp == 1:
-                if self.robot_name == "base_link":
-                    self.joints[i].rotate_with_MDH(clampTheta(thetas[i]), self.clamp)
-                else:
-                    self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
+                self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
             else:
-                if self.robot_name == "base_link":
-                    self.joints[i].rotate_with_MDH(thetas[i], self.clamp)
-                else:
-                    self.joints[i].rotate_numerically(thetas[i], self.clamp)
+                self.joints[i].rotate_numerically(thetas[i], self.clamp)
         self.calcJacobian()
 
 
@@ -354,9 +357,12 @@ class Robot_raw:
     def forwardKinmViaPositions(self, thetas):
 # potential clamping for joint rotation limits
 #   ==> ur10e does not have joint limits, but other robots might
-# the horribly arcsin(sin(x)) is here because it motors take positions from -pi to pi
-# it is highly advisable that this be calculated by a modulus or something along those lines
-# because calculating transcendental functions is way more expensive
+    # offset for j2n6s300
+#        if self.robot_name == "j2n6s300":
+#            thetas = thetas + np.array([np.pi,  np.pi,  np.pi,  \
+#                    np.pi,  0.0,  1.57079633])
+#        if self.robot_name == "base_link":
+#            thetas = thetas + np.array([np.pi, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) 
         for i in range(len(thetas)):
             # clamp
             if self.clamp == 1:
@@ -381,22 +387,21 @@ class Robot_raw:
 
 
     def forwardKinmNumericsOnlyDebug(self, thetas):
-        if self.robot_name == "j2n6s300":
-            thetas = thetas + np.array([-0.05057063,  0.76650935,  1.72458435,  \
-                    2.16381104,  2.11609863,  1.57079633])
+#        if self.robot_name == "j2n6s300":
+#            thetas = thetas + np.array([np.pi,  np.pi, np.pi, np.pi, 0.0, np.pi]) 
         for i in range(len(thetas)):
             # clamp
             if self.clamp == 1:
                 if self.sim == 1:
                     self.motors[i].setPosition(clampTheta(thetas[i]))
-                    self.updateJointsAndJacobian()
+#                    self.updateJointsAndJacobian()
                 else:
                     self.joints[i].rotate_numerically(clampTheta( thetas[i]), self.clamp)
                     self.calcJacobian()
             # no clamp
             else:
                 if self.sim == 1:
-                    self.motors[i].setPosition(thetas[i])
+#                    self.motors[i].setPosition(thetas[i])
                     self.updateJointsAndJacobian()
                 else:
                     self.joints[i].rotate_numerically(thetas[i] , self.clamp)
@@ -405,6 +410,9 @@ class Robot_raw:
 
     def forwardKinmNumericsOnlyDebug2(self, thetas):
         print("======================================")
+#        if self.robot_name == "j2n6s300":
+#            thetas = thetas + np.array([np.pi,  np.pi,  np.pi,  \
+#                    np.pi,  0.0,  1.57079633])
         for i in range(self.ndof):
             if self.clamp == 1:
                 self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)

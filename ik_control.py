@@ -81,19 +81,19 @@ print("eto me")
 # Main loop:
 # - perform simulation steps until Webots is stopping the controller
 #t = np.array([0.07,0.7,0.75929])
-#t = np.array([-0.60,0.07,0.75929])
+#t = np.array([0.060,0.47,0.75929])
 #t = np.array([-0.59702256, -0.424394371, 0.64633786])
-#t = np.array([0.59702256, 0.424394371, 0.64633786])
+t = np.array([-0.64702256, 0.64394371, 0.54633786])
 #t = np.array([-0.1617, -0.1901, 1.0250])
 #t = np.array([1.017, 1.1901, 1.0250])
 #t = np.array([-0.1617, -0.1901, 1.0250])
-#t = np.array([1.017, 1.1901, 1.0250])
-t = np.array([-0.165797, 0.571876, 0.618752])
-iter_num = 0
+#t = np.array([0.0, 0.1, 1.10])
+#iter_num = 0
 
 if sim == "no_sim":
     r = Robot_raw(robot_name="no_sim")
     damping = 5
+    error_vec = None
 else:
     damping = 1
     robot = Robot()
@@ -115,7 +115,11 @@ else:
     initializeMotorsForPosition(motors)
     radius = 0.35
     height = 0.67
+    error_vec = None
 #    drawCircle(radius, height, robot)
+#    motors[6].setPosition(float('inf'))
+#    motors[6].setVelocity(1.0)
+#    exit()
     for motor in motors:
         motor.setVelocity(float('inf'))
 
@@ -206,15 +210,15 @@ for broj in range(5):
             ee_pos_gps[2] = z_cp
             current_joint_positions = readJointState(sensors)
             e = t - np.array(ee_pos_gps)
-         #   print("ee_pos_gps")
-         #   print(ee_pos_gps)
-         #   print("r.p_e")
-         #   print(r.p_e)
+            print("ee_pos_gps")
+            print(ee_pos_gps)
+            print("r.p_e")
+            print(r.p_e)
 
         error = np.sqrt(np.dot(e,e))
-        #print("error:", error)
+#        print("error:", error)
         #print("r.p_e:", r.p_e)
-        #print("t:", t)
+#        print("t:", t)
 
 
 
@@ -275,10 +279,23 @@ for broj in range(5):
         # of course that can be modified
 
         
-
+# insead of passing both t and error_vec you can just pass the error vec
+# it is literally the same anyway
         if broj == 0:
-            #del_thet = invKinm_Jac_T(r, t)
-            del_thet = invKinmQP(r, t) / damping
+#            del_thet = invKinm_Jac_T(r, t)
+#            del_thet = invKinm_dampedSquares(r,t) / 10
+#            print(del_thet)
+#            del_thet = del_thet * -1
+#            del_thet[2] = del_thet[2] * -1
+#            del_thet = invKinmQPSingAvoidE_kI(r, t, error_vec) / 10
+#            del_thet = invKinmQP(r, t) / damping
+            del_thet = invKinmQPSingAvoidE_kM(r, t, error_vec) / damping
+ #           del_thet[0] = -1 * del_thet[0]
+ #           del_thet[1] = -1 * del_thet[1]
+ #           del_thet[2] = -1 * del_thet[2]
+ #           del_thet[3] = -1 * del_thet[3]
+ #           del_thet[4] = -1 * del_thet[4]
+ #           del_thet[5] = -1 * del_thet[5]
         if broj == 1:
             del_thet = invKinmQPSingAvoidE_kI(r, t, error_vec) / damping
         if broj == 2:
@@ -295,18 +312,18 @@ for broj in range(5):
 
         ############ some debugging ############
 #        q0 = np.array([1.1778, -1.5286,  2.0600,  2.9207, -1.0143, -0.2353])
-        if 1 == 0:
+        if 0 == 1:
             print("r.ndof")
             print(r.ndof)
-            q0 = np.array([np.pi / 2]*6)
-#            q0 = np.array([0]*r.ndof)
+            #q0 = np.array([np.pi / 2]*6)
+            #q0 = np.array([np.pi] * 6)
+            q0 = np.array([np.pi, np.pi, np.pi , np.pi,  0.0, np.pi])
+           # q0 = np.array([0.0]*r.ndof)
             r.forwardKinmNumericsOnlyDebug2(q0)
             print("r.p_e")
             print(r.p_e)
             for motor in range(r.ndof):
                 r.motors[motor].setPosition(q0[motor])
-
-
             ee_pos_gps = gps.getValues()
             ee_pos_gps[0] = -1 * ee_pos_gps[0]
             z_cp = ee_pos_gps[1]
@@ -316,23 +333,11 @@ for broj in range(5):
             e = t - np.array(ee_pos_gps)
             print("ee_pos_gps")
             print(ee_pos_gps)
-    #        print(r.calcMToEGradient_kM())
-    ##        for joint in r.joints:
-    ##            print(joint.theta)
-    ##        r.calcJacobian()
-    #        print("the resulting coefficients!!!")
-    #        print(invKinmQPSingAvoidManipMax(r, t))
-    #        invKinmQPSingAvoidManipMax(r, t)
-    #        print("")
-    #        print("")
-    #        print("")
-    ##        print("ik solution")
-    ##        print(invKinmQPSingAvoidE_kI(r, t))
             test = True 
-            current_joint_positions = np.array([0,0,0, 0,0,0])
+            current_joint_positions = np.array([0.0] * r.ndof)
             while test:
                 robot.step(timestep)
-                r.forwardKinmNumericsOnlyDebug2(q0)
+                r.forwardKinmNumericsOnlyDebug(q0)
                 print("r.p_e")
                 print(r.p_e)
                 ee_pos_gps = gps.getValues()
@@ -350,10 +355,14 @@ for broj in range(5):
                     summ += raz[bbb]
                 if summ == 0.0:
                     test = False
-                print("sensored positions")
-                print(current_joint_positions)
-            for jointt in r.joints:
-                print(jointt.theta)
+           #     print("sensored positions")
+           #     print(current_joint_positions)
+           # for jointt in r.joints:
+            #    print(jointt.theta)
+
+            r.forwardKinmNumericsOnlyDebug2(q0)
+            print("r.p_e")
+            print(r.p_e)
             exit()
     #
 
