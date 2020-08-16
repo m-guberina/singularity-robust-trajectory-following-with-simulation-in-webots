@@ -72,19 +72,23 @@ class Robot_raw:
         self.clamp = 0
         self.joints = []
         if self.robot_name == "no_sim":
-            fil = open('./kuka_lbw_iiwa_dh_params', 'r')
+            fil = open('j2n6s300_dh_params', 'r')
             print("i'm using: testing_dh_parameters")
         if self.robot_name == "UR10e":
             fil = open('ur10e_dh_parameters_from_the_ur_site', 'r')
             print('im using: ur10e_dh_parameters_from_the_ur_site')
         if self.robot_name == "base_link":
             fil = open('kuka_lbw_iiwa_dh_params', 'r')
+#            fil = open('lbr_iiwa_jos_jedan_dh', 'r')
             print("i'm using: kuka_lbw_iiwa_dh_params")
         if self.robot_name == "j2n6s300":
             fil = open('j2n6s300_dh_params', 'r')
             print("i'm using: j2n6s300_dh_params")
         if self.robot_name == "j2n6s300":
             fil = open('j2n6s300_dh_params', 'r')
+            print("i'm using: j2n6s300_dh_params")
+        if self.robot_name == "j2s7s300_link_base":
+            fil = open('j2s7s300_dh_params', 'r')
             print("i'm using: j2n6s300_dh_params")
 
         params = fil.read().split('\n')
@@ -337,14 +341,10 @@ class Robot_raw:
 # potential clamping for joint rotation limits
 # offset for j2n6s300
         if self.robot_name == "j2n6s300":
-            #thetas = thetas + np.array([np.pi,  np.pi,  np.pi,  \
-             #       np.pi,  0.0,  1.57079633])
-            #thetas = thetas + np.array([np.pi,  -1 * np.pi / 2,  -1* np.pi / 2,  \
-            #        0.0,  0.0,  np.pi / 2])
-            thetas = thetas + np.array([np.pi,  - np.pi / 2,  0.0,  \
-                    0.0,  0.0,  0.0])
-        if self.robot_name == "base_link":
-            thetas = thetas + np.array([np.pi, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) 
+            q1 = np.array([-0.01497, 1.5708, -1.5708, -1.5708, -3.14159, 0.0])
+            thetas = thetas + q1
+#        if self.robot_name == "base_link":
+#            thetas = thetas + np.array([np.pi, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) 
         for i in range(len(thetas)):
             if self.clamp == 1:
                 self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)
@@ -358,9 +358,9 @@ class Robot_raw:
 # potential clamping for joint rotation limits
 #   ==> ur10e does not have joint limits, but other robots might
     # offset for j2n6s300
-#        if self.robot_name == "j2n6s300":
-#            thetas = thetas + np.array([np.pi,  np.pi,  np.pi,  \
-#                    np.pi,  0.0,  1.57079633])
+        if self.robot_name == "j2n6s300":
+            thetas = thetas + np.array([np.pi,  np.pi,  np.pi,  \
+                    np.pi,  0.0,  1.57079633])
 #        if self.robot_name == "base_link":
 #            thetas = thetas + np.array([np.pi, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) 
         for i in range(len(thetas)):
@@ -382,8 +382,6 @@ class Robot_raw:
         else:
             self.calcJacobian()
 
-            # now we update the joints and calculate the jacobian
-            # perhaps that should be done before motor update, idk, TODO try it out
 
 
     def forwardKinmNumericsOnlyDebug(self, thetas):
@@ -411,8 +409,8 @@ class Robot_raw:
     def forwardKinmNumericsOnlyDebug2(self, thetas):
         print("======================================")
 #        if self.robot_name == "j2n6s300":
-#            thetas = thetas + np.array([np.pi,  np.pi,  np.pi,  \
-#                    np.pi,  0.0,  1.57079633])
+#            thetas = thetas + np.array([np.pi,  np.pi /2,  -np.pi/2,  \
+#                    0.0,  0.0,  1.57079633])
         for i in range(self.ndof):
             if self.clamp == 1:
                 self.joints[i].rotate_numerically(clampTheta(thetas[i]), self.clamp)

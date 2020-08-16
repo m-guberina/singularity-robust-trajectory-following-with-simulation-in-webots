@@ -1,6 +1,7 @@
 #########################################################3
 # for now only for ur10e, later write out for other robots
 #########################################################3
+import numpy as np
 
 
 def getAllMotors(robot):
@@ -18,8 +19,18 @@ def getAllMotors(robot):
 # for validation purposes, we must plot this circle
 def drawCircle(radius, height, robot):
     display = robot.getDisplay("display")
-    display.setColor(0xFF0FF)
-    display.drawOval(64,64,45,45)
+#    display.setColor(0xFFFFF)
+    display.setColor(0xF8FF04)
+    display.setColor(0xF8FF04)
+    display.setColor(0xFF0022)
+    display.setColor(0xFF0022)
+    display.setColor(0x00FFE6)
+    display.setColor(0x00FFE6)
+    display.drawOval(100,100,60,60)
+    display.drawOval(100,100,60,60)
+    display.drawOval(100,100,59,59)
+    display.drawOval(100,100,59,59)
+    print("drew the circle on the screen")
 
 def setMotorSpeeds(motors, speeds):
     for i in range(len(motors)):
@@ -143,3 +154,38 @@ def getAndInitAllSensorsKuka(robot):
 
     print("imported and inited sensors")
     return sensors
+
+
+
+def getAllMotorsJaco7(robot):
+    motors = []
+    motors.append(robot.getMotor('j2s7s300_joint_1'))
+    motors.append(robot.getMotor('j2s7s300_joint_2'))
+    motors.append(robot.getMotor('j2s7s300_joint_3'))
+    motors.append(robot.getMotor('j2s7s300_joint_4'))
+    motors.append(robot.getMotor('j2s7s300_joint_5'))
+    motors.append(robot.getMotor('j2s7s300_joint_6'))
+    motors.append(robot.getMotor('j2s7s300_joint_7'))
+    print("imported motors")
+    return motors
+
+
+def getAndInitAllSensorsJaco7(robot):
+    sensors = []
+    sensors.append(robot.getPositionSensor('j2s7s300_joint_1_sensor'))
+    sensors.append(robot.getPositionSensor('j2s7s300_joint_2_sensor'))
+    sensors.append(robot.getPositionSensor('j2s7s300_joint_3_sensor'))
+    sensors.append(robot.getPositionSensor('j2s7s300_joint_4_sensor'))
+    sensors.append(robot.getPositionSensor('j2s7s300_joint_5_sensor'))
+    sensors.append(robot.getPositionSensor('j2s7s300_joint_6_sensor'))
+    sensors.append(robot.getPositionSensor('j2s7s300_joint_7_sensor'))
+   
+   # now we must specify how often do sensors get read in miliseconds
+   # i've put 10ms since this seems like it should work smoothly,
+   # but ofc you should play with this value later on
+    for sensor in sensors:
+        sensor.enable(10)
+
+    print("imported and inited sensors")
+    return sensors
+
